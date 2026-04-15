@@ -7,16 +7,23 @@ export class Hud {
   private readonly killsEl: HTMLElement;
   private readonly deathEl: HTMLElement;
   private readonly deathSub: HTMLElement;
-  private readonly restartBtn: HTMLButtonElement;
+  private readonly deathRestart: HTMLButtonElement;
+  private readonly winEl: HTMLElement;
+  private readonly winStats: HTMLElement;
+  private readonly winRestart: HTMLButtonElement;
 
-  constructor(onRestart: () => void) {
+  constructor(onDeathRestart: () => void, onWinRestart: () => void) {
     this.hpEl = required("hp");
     this.hpFill = required("hp-fill");
     this.killsEl = required("kills");
     this.deathEl = required("death");
     this.deathSub = required("death-sub");
-    this.restartBtn = required("death-restart") as HTMLButtonElement;
-    this.restartBtn.addEventListener("click", onRestart);
+    this.deathRestart = required("death-restart") as HTMLButtonElement;
+    this.deathRestart.addEventListener("click", onDeathRestart);
+    this.winEl = required("win");
+    this.winStats = required("win-stats");
+    this.winRestart = required("win-restart") as HTMLButtonElement;
+    this.winRestart.addEventListener("click", onWinRestart);
   }
 
   update(player: Player, enemies: EnemyManager): void {
@@ -33,6 +40,18 @@ export class Hud {
 
   hideDeath(): void {
     this.deathEl.classList.remove("show");
+  }
+
+  showWin(kills: number, elapsedSec: number): void {
+    const m = Math.floor(elapsedSec / 60);
+    const s = Math.floor(elapsedSec % 60);
+    const t = `${m}:${s.toString().padStart(2, "0")}`;
+    this.winStats.textContent = `kills ${kills} · time ${t}`;
+    this.winEl.classList.add("show");
+  }
+
+  hideWin(): void {
+    this.winEl.classList.remove("show");
   }
 }
 

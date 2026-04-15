@@ -95,8 +95,7 @@ const SPAWN_INTERVAL = 2.2;
 const SPAWN_BURST_MIN = 2;
 const SPAWN_BURST_MAX = 4;
 const MIN_SPAWN_DIST = 9;
-const MAX_SPAWN_DIST = 15;
-const ARENA_LIMIT = 18;
+const MAX_SPAWN_DIST = 16;
 const MAX_ALIVE = 24;
 const LURKER_OPACITY_HIDDEN = 0.12;
 
@@ -150,7 +149,7 @@ export class EnemyManager {
     }
   }
 
-  tickSpawner(dt: number, playerPos: THREE.Vector3): void {
+  tickSpawner(dt: number, playerPos: THREE.Vector3, world: World): void {
     this.spawnTimer -= dt;
     if (this.spawnTimer > 0) return;
     this.spawnTimer = SPAWN_INTERVAL;
@@ -160,11 +159,13 @@ export class EnemyManager {
       SPAWN_BURST_MIN +
       Math.floor(Math.random() * (SPAWN_BURST_MAX - SPAWN_BURST_MIN + 1));
     for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const dist = MIN_SPAWN_DIST + Math.random() * (MAX_SPAWN_DIST - MIN_SPAWN_DIST);
-      const x = clamp(playerPos.x + Math.cos(angle) * dist, -ARENA_LIMIT, ARENA_LIMIT);
-      const z = clamp(playerPos.z + Math.sin(angle) * dist, -ARENA_LIMIT, ARENA_LIMIT);
-      this.spawn("scuttler", x, z);
+      const point = world.randomSpawnPointAround(
+        playerPos.x,
+        playerPos.z,
+        MIN_SPAWN_DIST,
+        MAX_SPAWN_DIST,
+      );
+      if (point) this.spawn("scuttler", point.x, point.z);
     }
   }
 
@@ -407,10 +408,6 @@ interface MeshBundle {
   group: THREE.Group;
   bodyMat: THREE.MeshStandardMaterial;
   extraMats: THREE.MeshStandardMaterial[];
-}
-
-function clamp(v: number, lo: number, hi: number): number {
-  return Math.max(lo, Math.min(hi, v));
 }
 
 function buildMesh(type: EnemyType): MeshBundle {

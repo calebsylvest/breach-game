@@ -5,6 +5,7 @@ export interface SceneCtx {
   scene: THREE.Scene;
   camera: THREE.OrthographicCamera;
   container: HTMLElement;
+  keyLight: THREE.DirectionalLight;
 }
 
 const FRUSTUM = 22;
@@ -39,13 +40,15 @@ export function createScene(container: HTMLElement): SceneCtx {
   key.position.set(12, 22, 8);
   key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024);
-  key.shadow.camera.left = -30;
-  key.shadow.camera.right = 30;
-  key.shadow.camera.top = 30;
-  key.shadow.camera.bottom = -30;
+  key.shadow.camera.left = -24;
+  key.shadow.camera.right = 24;
+  key.shadow.camera.top = 24;
+  key.shadow.camera.bottom = -24;
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 80;
+  key.shadow.bias = -0.0005;
   scene.add(key);
+  scene.add(key.target);
 
   const rim = new THREE.DirectionalLight(0x6ea8ff, 0.45);
   rim.position.set(-10, 10, -10);
@@ -63,5 +66,5 @@ export function createScene(container: HTMLElement): SceneCtx {
     renderer.setSize(w, h);
   });
 
-  return { renderer, scene, camera, container };
+  return { renderer, scene, camera, container, keyLight: key };
 }

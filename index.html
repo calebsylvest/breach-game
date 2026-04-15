@@ -84,6 +84,38 @@
         text-transform: uppercase;
         cursor: pointer;
       }
+      #win {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(4, 10, 6, 0.82);
+        pointer-events: none;
+      }
+      #win.show { display: flex; }
+      #win .panel {
+        text-align: center;
+        pointer-events: auto;
+      }
+      #win h1 {
+        font-size: 64px;
+        margin: 0 0 8px;
+        color: #66ffaa;
+        letter-spacing: 0.2em;
+      }
+      #win .sub { opacity: 0.75; font-size: 13px; }
+      #win button {
+        margin-top: 24px;
+        background: #66ffaa;
+        color: #062014;
+        border: 0;
+        padding: 12px 28px;
+        font: inherit;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -95,7 +127,7 @@
         <div class="bar"><div class="bar-fill" id="hp-fill" style="width: 100%"></div></div>
       </div>
       <div class="corner tr">
-        <div class="dim">breach // phase 4</div>
+        <div class="dim">breach // phase 5</div>
         <div id="kills">kills 0</div>
       </div>
       <div class="corner bl">
@@ -111,6 +143,13 @@
         <h1>KIA</h1>
         <div class="sub" id="death-sub">killed by scuttler</div>
         <button id="death-restart">play again</button>
+      </div>
+    </div>
+    <div id="win">
+      <div class="panel">
+        <h1>EXTRACTED</h1>
+        <div class="sub" id="win-stats">kills 0 · time 0:00</div>
+        <button id="win-restart">run again</button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
