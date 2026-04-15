@@ -51,7 +51,9 @@ export class Game {
     this.hud = new Hud(
       () => this.restart(),
       () => this.restart(),
+      () => this.startRun(),
     );
+    this.paused = true;
 
     this.initRoomStates();
 
@@ -80,6 +82,14 @@ export class Game {
       requestAnimationFrame(loop);
     };
     requestAnimationFrame(loop);
+  }
+
+  private startRun(): void {
+    this.hud.hideTitle();
+    this.audio.resume();
+    this.paused = false;
+    this.runStart = performance.now();
+    this.last = performance.now();
   }
 
   restart(): void {
@@ -179,7 +189,7 @@ export class Game {
     }
 
     if (this.player.hp <= 0 && !this.deathShown) {
-      this.hud.showDeath("scuttler");
+      this.hud.showDeath(this.player.lastDamageSource);
       this.audio.deathTone();
       this.deathShown = true;
     }

@@ -26,8 +26,14 @@ export class Hud {
   private readonly minimapCtx: CanvasRenderingContext2D;
   private readonly upgradeEl: HTMLElement;
   private readonly upgradeCards: HTMLElement;
+  private readonly titleEl: HTMLElement;
+  private readonly titlePlay: HTMLButtonElement;
 
-  constructor(onDeathRestart: () => void, onWinRestart: () => void) {
+  constructor(
+    onDeathRestart: () => void,
+    onWinRestart: () => void,
+    onTitlePlay: () => void,
+  ) {
     this.hpEl = required("hp");
     this.hpFill = required("hp-fill");
     this.killsEl = required("kills");
@@ -46,6 +52,13 @@ export class Hud {
     this.minimapCtx = ctx;
     this.upgradeEl = required("upgrade");
     this.upgradeCards = required("upgrade-cards");
+    this.titleEl = required("title");
+    this.titlePlay = required("title-play") as HTMLButtonElement;
+    this.titlePlay.addEventListener("click", onTitlePlay);
+  }
+
+  hideTitle(): void {
+    this.titleEl.classList.add("hidden");
   }
 
   update(player: Player, enemies: EnemyManager, world: World): void {

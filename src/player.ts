@@ -25,6 +25,7 @@ export class Player {
   stats: Stats = makeStats();
   hp = PLAYER_MAX_HP;
   hitFlash = 0;
+  lastDamageSource = "unknown";
 
   get maxHp(): number {
     return PLAYER_MAX_HP + this.stats.maxHpBonus;
@@ -107,10 +108,11 @@ export class Player {
     this.updateHitFlash(dt);
   }
 
-  damage(amount: number): void {
+  damage(amount: number, source = "unknown"): void {
     if (this.hp <= 0) return;
     this.hp = Math.max(0, this.hp - amount);
     this.hitFlash = 0.18;
+    this.lastDamageSource = source;
     if (this.hp <= 0) {
       this.group.rotation.z = Math.PI / 2;
       this.group.position.y = 0.1;

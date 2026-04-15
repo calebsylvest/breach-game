@@ -273,7 +273,7 @@ export class EnemyManager {
     if (def.contactDamage > 0 && e.contactTimer <= 0) {
       const touchR = def.radius + 0.42;
       if (distSq < touchR * touchR) {
-        player.damage(def.contactDamage);
+        player.damage(def.contactDamage, e.type);
         e.contactTimer = def.contactCooldown;
       }
     }
@@ -392,7 +392,7 @@ class SpitSystem {
       const dx = s.mesh.position.x - player.position.x;
       const dz = s.mesh.position.z - player.position.z;
       if (dx * dx + dz * dz < SPIT_HIT_RADIUS * SPIT_HIT_RADIUS) {
-        player.damage(s.damage);
+        player.damage(s.damage, "spitter");
         this.retire(s);
       }
     }
