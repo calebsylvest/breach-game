@@ -3,9 +3,13 @@ export class Input {
   mouseNdcX = 0;
   mouseNdcY = 0;
   firing = false;
+  private dashQueued = false;
 
   constructor(target: HTMLElement) {
     window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "ShiftLeft" || e.code === "ShiftRight") {
+        if (!this.keys.has(e.code)) this.dashQueued = true;
+      }
       this.keys.add(e.code);
     });
     window.addEventListener("keyup", (e) => {
@@ -14,6 +18,7 @@ export class Input {
     window.addEventListener("blur", () => {
       this.keys.clear();
       this.firing = false;
+      this.dashQueued = false;
     });
 
     target.addEventListener("mousemove", (e) => {
@@ -30,6 +35,14 @@ export class Input {
       if (e.button === 0) this.firing = false;
     });
     target.addEventListener("contextmenu", (e) => e.preventDefault());
+  }
+
+  consumeDash(): boolean {
+    if (this.dashQueued) {
+      this.dashQueued = false;
+      return true;
+    }
+    return false;
   }
 
   movement(): { x: number; z: number } {

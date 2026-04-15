@@ -14,6 +14,7 @@ const ROOM_COLORS: Record<RoomType, string> = {
 export class Hud {
   private readonly hpEl: HTMLElement;
   private readonly hpFill: HTMLElement;
+  private readonly dashFill: HTMLElement;
   private readonly killsEl: HTMLElement;
   private readonly roomEl: HTMLElement;
   private readonly deathEl: HTMLElement;
@@ -36,6 +37,7 @@ export class Hud {
   ) {
     this.hpEl = required("hp");
     this.hpFill = required("hp-fill");
+    this.dashFill = required("dash-fill");
     this.killsEl = required("kills");
     this.roomEl = required("room-label");
     this.deathEl = required("death");
@@ -65,6 +67,10 @@ export class Hud {
     this.hpEl.textContent = `HP ${Math.max(0, Math.round(player.hp))} / ${player.maxHp}`;
     const pct = Math.max(0, player.hp / player.maxHp) * 100;
     this.hpFill.style.width = `${pct}%`;
+    const dashPct = player.dashCooldown <= 0
+      ? 100
+      : (1 - player.dashCooldown / player.dashCooldownMax) * 100;
+    this.dashFill.style.width = `${dashPct}%`;
     this.killsEl.textContent = `kills ${enemies.killCount}`;
     const current = currentRoom(world, player.position.x, player.position.z);
     this.roomEl.textContent = current ? current.type : "void";

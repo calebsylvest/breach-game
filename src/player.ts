@@ -6,6 +6,10 @@ import { resolveMovement } from "./collision.ts";
 const PLAYER_RADIUS = 0.4;
 const PLAYER_SPEED = 5;
 const PLAYER_MAX_HP = 100;
+const DASH_DISTANCE = 4;
+const DASH_DURATION = 0.18;
+const DASH_COOLDOWN = 1.5;
+const DASH_SPEED = DASH_DISTANCE / DASH_DURATION;
 
 export interface Stats {
   damageMult: number;
@@ -26,6 +30,10 @@ export class Player {
   hp = PLAYER_MAX_HP;
   hitFlash = 0;
   lastDamageSource = "unknown";
+  dashTime = 0;
+  dashCooldown = 0;
+  readonly dashCooldownMax = DASH_COOLDOWN;
+  private readonly dashDir = new THREE.Vector3();
 
   get maxHp(): number {
     return PLAYER_MAX_HP + this.stats.maxHpBonus;
@@ -38,6 +46,13 @@ export class Player {
   resetRun(): void {
     this.stats = makeStats();
     this.hp = this.maxHp;
+    this.dashTime = 0;
+    this.dashCooldown = 0;
+    this.lastDamageSource = "unknown";
+  }
+
+  get isDashing(): boolean {
+    return this.dashTime > 0;
   }
 
   private readonly raycaster = new THREE.Raycaster();
@@ -103,13 +118,23 @@ export class Player {
       return;
     }
     this.updateAim(input, camera);
-    this.updateMovement(dt, input, camera, world);
+    this.dashCooldown = Math.max(0, this.dashCooldown - dt);
+    if (input.consumeDash() && this.dashCooldown <= 0 && this.dashTime <= 0) {
+      this.startDash(input, camera);
+    }
+    if (this.dashTime > 0) {
+      this.dashTime = Math.max(0, this.dashTime - dt);
+      this.applyDashStep(dt, world);
+    } else {
+      this.updateMovement(dt, input, camera, world);
+    }
     this.group.position.set(this.position.x, 0, this.position.z);
     this.updateHitFlash(dt);
   }
 
   damage(amount: number, source = "unknown"): void {
     if (this.hp <= 0) return;
+    if (this.dashTime > 0) return;
     this.hp = Math.max(0, this.hp - amount);
     this.hitFlash = 0.18;
     this.lastDamageSource = source;
@@ -119,9 +144,48 @@ export class Player {
     }
   }
 
+  private startDash(input: Input, camera: THREE.Camera): void {
+    const m = input.movement();
+    if (m.x !== 0 || m.z !== 0) {
+      camera.getWorldDirection(this.forward);
+      this.forward.y = 0;
+      this.forward.normalize();
+      this.right.crossVectors(this.forward, this.worldUp);
+      const dx = this.forward.x * -m.z + this.right.x * m.x;
+      const dz = this.forward.z * -m.z + this.right.z * m.x;
+      const mag = Math.hypot(dx, dz);
+      if (mag < 0.001) {
+        this.dashDir.set(this.aim.x, 0, this.aim.z);
+      } else {
+        this.dashDir.set(dx / mag, 0, dz / mag);
+      }
+    } else {
+      this.dashDir.set(this.aim.x, 0, this.aim.z);
+    }
+    this.dashTime = DASH_DURATION;
+    this.dashCooldown = DASH_COOLDOWN;
+  }
+
+  private applyDashStep(dt: number, world: World): void {
+    const step = DASH_SPEED * dt;
+    const resolved = resolveMovement(
+      { x: this.position.x, z: this.position.z, r: PLAYER_RADIUS },
+      this.dashDir.x * step,
+      this.dashDir.z * step,
+      world.colliders,
+    );
+    this.position.x = resolved.x;
+    this.position.z = resolved.z;
+  }
+
   private updateHitFlash(dt: number): void {
+    if (this.dashTime > 0) {
+      this.bodyMat.emissive.setRGB(0.1, 0.55, 0.95);
+      this.torsoMat.emissive.setRGB(0.1, 0.55, 0.95);
+      return;
+    }
     if (this.hitFlash <= 0) {
-      if (this.bodyMat.emissive.r !== 0) {
+      if (this.bodyMat.emissive.r !== 0 || this.bodyMat.emissive.g !== 0) {
         this.bodyMat.emissive.setRGB(0, 0, 0);
         this.torsoMat.emissive.setRGB(0, 0, 0);
       }
