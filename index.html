@@ -40,6 +40,15 @@
       #hud .bl { bottom: 12px; left: 12px; }
       #hud .br { bottom: 12px; right: 12px; text-align: right; }
       .dim { opacity: 0.6; }
+      #minimap {
+        display: block;
+        background: #05080c;
+        border: 1px solid #2a3446;
+        image-rendering: pixelated;
+      }
+      #room-label {
+        margin-top: 6px;
+      }
       .bar {
         width: 220px;
         height: 10px;
@@ -127,8 +136,9 @@
         <div class="bar"><div class="bar-fill" id="hp-fill" style="width: 100%"></div></div>
       </div>
       <div class="corner tr">
-        <div class="dim">breach // phase 5</div>
+        <canvas id="minimap" width="160" height="120"></canvas>
         <div id="kills">kills 0</div>
+        <div class="dim" id="room-label">start</div>
       </div>
       <div class="corner bl">
         <div class="dim">ammo</div>

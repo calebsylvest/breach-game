@@ -110,7 +110,7 @@ export class Game {
     }
 
     this.bullets.update(dt, this.world, this.enemies);
-    this.hud.update(this.player, this.enemies);
+    this.hud.update(this.player, this.enemies, this.world);
 
     if (this.player.hp <= 0 && !this.deathShown) {
       this.hud.showDeath("scuttler");
