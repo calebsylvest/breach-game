@@ -7,6 +7,7 @@ import { BulletSystem, BULLET_BASE_DAMAGE } from "./weapons.ts";
 import { EnemyManager, type EnemyType } from "./enemies.ts";
 import { Hud } from "./hud.ts";
 import { rollUpgrades, type Upgrade } from "./upgrades.ts";
+import { Audio } from "./audio.ts";
 
 const CAMERA_OFFSET = new THREE.Vector3(16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
@@ -22,6 +23,7 @@ export class Game {
   readonly bullets: BulletSystem;
   readonly enemies: EnemyManager;
   private readonly hud: Hud;
+  private readonly audio = new Audio();
   private readonly followTarget = new THREE.Vector3();
   private readonly muzzle = new THREE.Vector3();
   private readonly roomStates = new Map<Room, RoomState>();
@@ -31,6 +33,10 @@ export class Game {
   private winShown = false;
   private paused = false;
   private runStart = performance.now();
+  private lastHp = 0;
+  private lastKillCount = 0;
+  private shakeTime = 0;
+  private shakeAmp = 0;
 
   constructor(container: HTMLElement) {
     this.ctx = createScene(container);
@@ -48,6 +54,14 @@ export class Game {
     );
 
     this.initRoomStates();
+
+    this.lastHp = this.player.hp;
+    this.lastKillCount = 0;
+    this.ctx.renderer.domElement.addEventListener(
+      "mousedown",
+      () => this.audio.resume(),
+      { once: true },
+    );
 
     this.followTarget.copy(this.player.position);
     this.ctx.camera.position.copy(this.followTarget).add(CAMERA_OFFSET);
@@ -83,6 +97,10 @@ export class Game {
     this.winShown = false;
     this.paused = false;
     this.runStart = performance.now();
+    this.lastHp = this.player.hp;
+    this.lastKillCount = 0;
+    this.shakeTime = 0;
+    this.shakeAmp = 0;
     this.hud.hideDeath();
     this.hud.hideWin();
     this.hud.hideUpgrade();
@@ -114,6 +132,13 @@ export class Game {
     const smooth = 1 - Math.exp(-dt * 10);
     this.followTarget.lerp(this.player.position, smooth);
     this.ctx.camera.position.copy(this.followTarget).add(CAMERA_OFFSET);
+    if (this.shakeTime > 0) {
+      this.shakeTime -= dt;
+      const t = Math.max(0, Math.min(1, this.shakeTime / 0.25));
+      const a = this.shakeAmp * t;
+      this.ctx.camera.position.x += (Math.random() - 0.5) * a;
+      this.ctx.camera.position.z += (Math.random() - 0.5) * a;
+    }
     this.ctx.camera.lookAt(this.followTarget);
     this.updateLight();
 
@@ -133,19 +158,36 @@ export class Game {
       const damage = BULLET_BASE_DAMAGE * this.player.stats.damageMult;
       this.bullets.spawn(this.muzzle, this.player.aim, damage);
       this.fireCooldown = fireInterval;
+      this.audio.gunshot();
+      this.triggerShake(0.08, 0.08);
     }
 
     this.bullets.update(dt, this.world, this.enemies);
     this.hud.update(this.player, this.enemies, this.world);
 
+    if (this.player.hp < this.lastHp) {
+      this.audio.playerHit();
+      this.triggerShake(0.45, 0.22);
+    }
+    this.lastHp = this.player.hp;
+
+    if (this.enemies.killCount > this.lastKillCount) {
+      for (let i = this.lastKillCount; i < this.enemies.killCount; i++) {
+        this.audio.enemyDeath();
+      }
+      this.lastKillCount = this.enemies.killCount;
+    }
+
     if (this.player.hp <= 0 && !this.deathShown) {
       this.hud.showDeath("scuttler");
+      this.audio.deathTone();
       this.deathShown = true;
     }
 
     if (!this.winShown && !this.deathShown && this.playerReachedExtraction()) {
       const elapsed = (performance.now() - this.runStart) / 1000;
       this.hud.showWin(this.enemies.killCount, elapsed);
+      this.audio.winTone();
       this.winShown = true;
     }
 
@@ -198,6 +240,13 @@ export class Game {
       this.hud.hideUpgrade();
       this.paused = false;
     });
+  }
+
+  private triggerShake(amp: number, duration: number): void {
+    if (amp > this.shakeAmp || this.shakeTime <= 0) {
+      this.shakeAmp = amp;
+    }
+    this.shakeTime = Math.max(this.shakeTime, duration);
   }
 
   private playerReachedExtraction(): boolean {
