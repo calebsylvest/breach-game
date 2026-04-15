@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { World } from "./world.ts";
 import type { EnemyManager } from "./enemies.ts";
+import type { ParticleSystem } from "./particles.ts";
 
 const BULLET_SPEED = 45;
 const BULLET_LIFE = 1.2;
@@ -54,7 +55,7 @@ export class BulletSystem {
     }
   }
 
-  update(dt: number, world: World, enemies: EnemyManager): void {
+  update(dt: number, world: World, enemies: EnemyManager, particles: ParticleSystem): void {
     for (const b of this.bullets) {
       if (!b.alive) continue;
       b.life -= dt;
@@ -64,10 +65,23 @@ export class BulletSystem {
       }
       b.mesh.position.addScaledVector(b.velocity, dt);
       if (world.collidesPoint(b.mesh.position)) {
+        particles.burst(b.mesh.position.x, b.mesh.position.y, b.mesh.position.z, 3, 0x88aaff, 3, 0.22);
         this.retire(b);
         continue;
       }
-      if (enemies.damageAtPoint(b.mesh.position, b.damage)) {
+      const hit = enemies.damageAtPoint(b.mesh.position, b.damage);
+      if (hit) {
+        const color = hit.alive ? 0xffaa55 : 0xff5544;
+        const count = hit.alive ? 4 : 10;
+        particles.burst(
+          b.mesh.position.x,
+          b.mesh.position.y,
+          b.mesh.position.z,
+          count,
+          color,
+          hit.alive ? 4 : 7,
+          hit.alive ? 0.3 : 0.6,
+        );
         this.retire(b);
       }
     }

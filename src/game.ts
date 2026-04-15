@@ -8,6 +8,7 @@ import { EnemyManager, type EnemyType } from "./enemies.ts";
 import { Hud } from "./hud.ts";
 import { rollUpgrades, type Upgrade } from "./upgrades.ts";
 import { Audio } from "./audio.ts";
+import { ParticleSystem } from "./particles.ts";
 
 const CAMERA_OFFSET = new THREE.Vector3(16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
@@ -22,6 +23,7 @@ export class Game {
   readonly world: World;
   readonly bullets: BulletSystem;
   readonly enemies: EnemyManager;
+  readonly particles: ParticleSystem;
   private readonly hud: Hud;
   private readonly audio = new Audio();
   private readonly followTarget = new THREE.Vector3();
@@ -48,6 +50,7 @@ export class Game {
     this.ctx.scene.add(this.player.group);
     this.enemies = new EnemyManager(this.ctx.scene);
     this.bullets = new BulletSystem(this.ctx.scene);
+    this.particles = new ParticleSystem(this.ctx.scene);
     this.hud = new Hud(
       () => this.restart(),
       () => this.restart(),
@@ -167,12 +170,20 @@ export class Game {
       );
       const damage = BULLET_BASE_DAMAGE * this.player.stats.damageMult;
       this.bullets.spawn(this.muzzle, this.player.aim, damage);
+      this.particles.muzzle(
+        this.muzzle.x,
+        this.muzzle.y,
+        this.muzzle.z,
+        this.player.aim.x,
+        this.player.aim.z,
+      );
       this.fireCooldown = fireInterval;
       this.audio.gunshot();
       this.triggerShake(0.08, 0.08);
     }
 
-    this.bullets.update(dt, this.world, this.enemies);
+    this.bullets.update(dt, this.world, this.enemies, this.particles);
+    this.particles.update(dt);
     this.hud.update(this.player, this.enemies, this.world);
 
     if (this.player.hp < this.lastHp) {
