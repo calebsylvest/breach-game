@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BREACH</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #05070a;
+        color: #d9e2ec;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        overflow: hidden;
+        height: 100%;
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+      }
+      canvas {
+        display: block;
+      }
+      #hud {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        padding: 16px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      #hud .corner {
+        position: absolute;
+        padding: 12px 14px;
+      }
+      #hud .tl { top: 12px; left: 12px; }
+      #hud .tr { top: 12px; right: 12px; text-align: right; }
+      #hud .bl { bottom: 12px; left: 12px; }
+      #hud .br { bottom: 12px; right: 12px; text-align: right; }
+      .dim { opacity: 0.6; }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="hud">
+      <div class="corner tl">
+        <div class="dim">soldier</div>
+        <div id="hp">HP 100</div>
+      </div>
+      <div class="corner tr">
+        <div class="dim">breach // phase 3</div>
+      </div>
+      <div class="corner bl">
+        <div class="dim">ammo</div>
+        <div id="ammo">-- / --</div>
+      </div>
+      <div class="corner br">
+        <div class="dim">WASD move · mouse aim · click fire</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
