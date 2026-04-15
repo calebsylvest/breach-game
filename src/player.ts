@@ -7,13 +7,37 @@ const PLAYER_RADIUS = 0.4;
 const PLAYER_SPEED = 5;
 const PLAYER_MAX_HP = 100;
 
+export interface Stats {
+  damageMult: number;
+  fireRateMult: number;
+  speedMult: number;
+  maxHpBonus: number;
+}
+
+export function makeStats(): Stats {
+  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0 };
+}
+
 export class Player {
   readonly group: THREE.Group;
   readonly position = new THREE.Vector3(0, 0, 0);
   readonly aim = new THREE.Vector3(1, 0, 0);
+  stats: Stats = makeStats();
   hp = PLAYER_MAX_HP;
-  readonly maxHp = PLAYER_MAX_HP;
   hitFlash = 0;
+
+  get maxHp(): number {
+    return PLAYER_MAX_HP + this.stats.maxHpBonus;
+  }
+
+  get speed(): number {
+    return PLAYER_SPEED * this.stats.speedMult;
+  }
+
+  resetRun(): void {
+    this.stats = makeStats();
+    this.hp = this.maxHp;
+  }
 
   private readonly raycaster = new THREE.Raycaster();
   private readonly mouse2 = new THREE.Vector2();
@@ -139,7 +163,7 @@ export class Player {
     const mag = Math.hypot(moveX, moveZ);
     if (mag < 0.001) return;
 
-    const step = PLAYER_SPEED * dt;
+    const step = this.speed * dt;
     const dxWorld = (moveX / mag) * step;
     const dzWorld = (moveZ / mag) * step;
 

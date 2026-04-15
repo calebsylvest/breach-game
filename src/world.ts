@@ -97,6 +97,21 @@ export class World {
     return false;
   }
 
+  randomPointInRoom(room: Room, margin = 1): { x: number; z: number } | null {
+    const tmp = new THREE.Vector3();
+    const w = room.maxX - room.minX - margin * 2;
+    const d = room.maxZ - room.minZ - margin * 2;
+    if (w <= 0 || d <= 0) return null;
+    for (let i = 0; i < 40; i++) {
+      const x = room.minX + margin + Math.random() * w;
+      const z = room.minZ + margin + Math.random() * d;
+      tmp.set(x, 0, z);
+      if (this.collidesPoint(tmp)) continue;
+      return { x, z };
+    }
+    return null;
+  }
+
   randomSpawnPointAround(
     cx: number,
     cz: number,

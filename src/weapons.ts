@@ -4,7 +4,7 @@ import type { EnemyManager } from "./enemies.ts";
 
 const BULLET_SPEED = 45;
 const BULLET_LIFE = 1.2;
-const BULLET_DAMAGE = 25;
+export const BULLET_BASE_DAMAGE = 25;
 const POOL_SIZE = 128;
 
 interface Bullet {
@@ -12,6 +12,7 @@ interface Bullet {
   alive: boolean;
   velocity: THREE.Vector3;
   life: number;
+  damage: number;
 }
 
 export class BulletSystem {
@@ -35,11 +36,12 @@ export class BulletSystem {
         alive: false,
         velocity: new THREE.Vector3(),
         life: 0,
+        damage: 0,
       });
     }
   }
 
-  spawn(origin: THREE.Vector3, direction: THREE.Vector3): void {
+  spawn(origin: THREE.Vector3, direction: THREE.Vector3, damage: number): void {
     for (const b of this.bullets) {
       if (b.alive) continue;
       b.alive = true;
@@ -47,6 +49,7 @@ export class BulletSystem {
       b.mesh.position.copy(origin);
       b.velocity.copy(direction).multiplyScalar(BULLET_SPEED);
       b.life = BULLET_LIFE;
+      b.damage = damage;
       return;
     }
   }
@@ -64,7 +67,7 @@ export class BulletSystem {
         this.retire(b);
         continue;
       }
-      if (enemies.damageAtPoint(b.mesh.position, BULLET_DAMAGE)) {
+      if (enemies.damageAtPoint(b.mesh.position, b.damage)) {
         this.retire(b);
       }
     }

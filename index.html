@@ -125,6 +125,73 @@
         text-transform: uppercase;
         cursor: pointer;
       }
+      #upgrade {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(6, 9, 14, 0.85);
+        pointer-events: none;
+      }
+      #upgrade.show { display: flex; }
+      #upgrade .panel {
+        text-align: center;
+        pointer-events: auto;
+      }
+      #upgrade h2 {
+        font-size: 28px;
+        letter-spacing: 0.28em;
+        color: #d9e2ec;
+        margin: 0 0 28px;
+      }
+      #upgrade-cards {
+        display: flex;
+        gap: 18px;
+      }
+      .upgrade-card {
+        width: 200px;
+        min-height: 180px;
+        padding: 20px 18px;
+        background: #0d1420;
+        border: 1px solid #2a3446;
+        color: #d9e2ec;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: transform 120ms, border-color 120ms, background 120ms;
+      }
+      .upgrade-card:hover {
+        transform: translateY(-4px);
+        background: #121c2e;
+      }
+      .upgrade-card .card-tag {
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        opacity: 0.55;
+        text-transform: uppercase;
+      }
+      .upgrade-card .card-name {
+        font-size: 18px;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0.02em;
+      }
+      .upgrade-card .card-desc {
+        font-size: 11px;
+        opacity: 0.72;
+        text-transform: none;
+        letter-spacing: 0.04em;
+      }
+      .upgrade-card.offense { border-color: #ff6b6b; }
+      .upgrade-card.offense:hover { background: #2a1216; }
+      .upgrade-card.defense { border-color: #6bb2ff; }
+      .upgrade-card.defense:hover { background: #0f1c2e; }
+      .upgrade-card.utility { border-color: #d4c066; }
+      .upgrade-card.utility:hover { background: #25200c; }
     </style>
   </head>
   <body>
@@ -160,6 +227,12 @@
         <h1>EXTRACTED</h1>
         <div class="sub" id="win-stats">kills 0 · time 0:00</div>
         <button id="win-restart">run again</button>
+      </div>
+    </div>
+    <div id="upgrade">
+      <div class="panel">
+        <h2>UPGRADE</h2>
+        <div id="upgrade-cards"></div>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

@@ -1,6 +1,7 @@
 import type { Player } from "./player.ts";
 import type { EnemyManager } from "./enemies.ts";
 import type { World, Room, RoomType } from "./world.ts";
+import type { Upgrade } from "./upgrades.ts";
 
 const ROOM_COLORS: Record<RoomType, string> = {
   start: "#2e4a6b",
@@ -23,6 +24,8 @@ export class Hud {
   private readonly winRestart: HTMLButtonElement;
   private readonly minimapCanvas: HTMLCanvasElement;
   private readonly minimapCtx: CanvasRenderingContext2D;
+  private readonly upgradeEl: HTMLElement;
+  private readonly upgradeCards: HTMLElement;
 
   constructor(onDeathRestart: () => void, onWinRestart: () => void) {
     this.hpEl = required("hp");
@@ -41,6 +44,8 @@ export class Hud {
     const ctx = this.minimapCanvas.getContext("2d");
     if (!ctx) throw new Error("minimap 2d ctx unavailable");
     this.minimapCtx = ctx;
+    this.upgradeEl = required("upgrade");
+    this.upgradeCards = required("upgrade-cards");
   }
 
   update(player: Player, enemies: EnemyManager, world: World): void {
@@ -123,6 +128,26 @@ export class Hud {
 
   hideWin(): void {
     this.winEl.classList.remove("show");
+  }
+
+  showUpgrade(cards: Upgrade[], onPick: (card: Upgrade) => void): void {
+    this.upgradeCards.innerHTML = "";
+    for (const card of cards) {
+      const btn = document.createElement("button");
+      btn.className = `upgrade-card ${card.category}`;
+      btn.innerHTML =
+        `<div class="card-tag">${card.category}</div>` +
+        `<div class="card-name">${card.name}</div>` +
+        `<div class="card-desc">${card.description}</div>`;
+      btn.addEventListener("click", () => onPick(card), { once: true });
+      this.upgradeCards.appendChild(btn);
+    }
+    this.upgradeEl.classList.add("show");
+  }
+
+  hideUpgrade(): void {
+    this.upgradeEl.classList.remove("show");
+    this.upgradeCards.innerHTML = "";
   }
 }
 
