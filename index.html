@@ -40,6 +40,50 @@
       #hud .bl { bottom: 12px; left: 12px; }
       #hud .br { bottom: 12px; right: 12px; text-align: right; }
       .dim { opacity: 0.6; }
+      .bar {
+        width: 220px;
+        height: 10px;
+        background: #11161f;
+        border: 1px solid #2a3446;
+        margin-top: 4px;
+      }
+      .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff3b3b, #ff6666);
+        transition: width 120ms linear;
+      }
+      #death {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(8, 4, 4, 0.78);
+        pointer-events: none;
+      }
+      #death.show { display: flex; }
+      #death .panel {
+        text-align: center;
+        pointer-events: auto;
+      }
+      #death h1 {
+        font-size: 64px;
+        margin: 0 0 8px;
+        color: #ff4b4b;
+        letter-spacing: 0.2em;
+      }
+      #death .sub { opacity: 0.7; font-size: 13px; }
+      #death button {
+        margin-top: 24px;
+        background: #ff4b4b;
+        color: #0a0a0a;
+        border: 0;
+        padding: 12px 28px;
+        font: inherit;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -47,17 +91,26 @@
     <div id="hud">
       <div class="corner tl">
         <div class="dim">soldier</div>
-        <div id="hp">HP 100</div>
+        <div id="hp">HP 100 / 100</div>
+        <div class="bar"><div class="bar-fill" id="hp-fill" style="width: 100%"></div></div>
       </div>
       <div class="corner tr">
-        <div class="dim">breach // phase 3</div>
+        <div class="dim">breach // phase 4</div>
+        <div id="kills">kills 0</div>
       </div>
       <div class="corner bl">
         <div class="dim">ammo</div>
-        <div id="ammo">-- / --</div>
+        <div id="ammo">∞ / ∞</div>
       </div>
       <div class="corner br">
         <div class="dim">WASD move · mouse aim · click fire</div>
+      </div>
+    </div>
+    <div id="death">
+      <div class="panel">
+        <h1>KIA</h1>
+        <div class="sub" id="death-sub">killed by scuttler</div>
+        <button id="death-restart">play again</button>
       </div>
     </div>
     <script type="module" src="/src/main.ts"></script>

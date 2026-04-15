@@ -5,12 +5,15 @@ import { resolveMovement } from "./collision.ts";
 
 const PLAYER_RADIUS = 0.4;
 const PLAYER_SPEED = 5;
+const PLAYER_MAX_HP = 100;
 
 export class Player {
   readonly group: THREE.Group;
   readonly position = new THREE.Vector3(0, 0, 0);
   readonly aim = new THREE.Vector3(1, 0, 0);
-  hp = 100;
+  hp = PLAYER_MAX_HP;
+  readonly maxHp = PLAYER_MAX_HP;
+  hitFlash = 0;
 
   private readonly raycaster = new THREE.Raycaster();
   private readonly mouse2 = new THREE.Vector2();
@@ -19,27 +22,31 @@ export class Player {
   private readonly forward = new THREE.Vector3();
   private readonly right = new THREE.Vector3();
   private readonly worldUp = new THREE.Vector3(0, 1, 0);
+  private bodyMat!: THREE.MeshStandardMaterial;
+  private torsoMat!: THREE.MeshStandardMaterial;
 
   constructor() {
     this.group = new THREE.Group();
 
     const bodyGeo = new THREE.CapsuleGeometry(0.35, 0.9, 6, 12);
-    const bodyMat = new THREE.MeshStandardMaterial({
+    this.bodyMat = new THREE.MeshStandardMaterial({
       color: 0x2b6cd9,
       roughness: 0.5,
       metalness: 0.2,
+      emissive: 0x000000,
     });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    const body = new THREE.Mesh(bodyGeo, this.bodyMat);
     body.position.y = 0.85;
     body.castShadow = true;
     this.group.add(body);
 
     const torsoGeo = new THREE.BoxGeometry(0.75, 0.45, 0.55);
-    const torsoMat = new THREE.MeshStandardMaterial({
+    this.torsoMat = new THREE.MeshStandardMaterial({
       color: 0x3a82f7,
       roughness: 0.4,
+      emissive: 0x000000,
     });
-    const torso = new THREE.Mesh(torsoGeo, torsoMat);
+    const torso = new THREE.Mesh(torsoGeo, this.torsoMat);
     torso.position.y = 1.35;
     torso.castShadow = true;
     this.group.add(torso);
@@ -66,9 +73,38 @@ export class Player {
   }
 
   update(dt: number, input: Input, camera: THREE.Camera, world: World): void {
+    if (this.hp <= 0) {
+      this.updateHitFlash(dt);
+      return;
+    }
     this.updateAim(input, camera);
     this.updateMovement(dt, input, camera, world);
     this.group.position.set(this.position.x, 0, this.position.z);
+    this.updateHitFlash(dt);
+  }
+
+  damage(amount: number): void {
+    if (this.hp <= 0) return;
+    this.hp = Math.max(0, this.hp - amount);
+    this.hitFlash = 0.18;
+    if (this.hp <= 0) {
+      this.group.rotation.z = Math.PI / 2;
+      this.group.position.y = 0.1;
+    }
+  }
+
+  private updateHitFlash(dt: number): void {
+    if (this.hitFlash <= 0) {
+      if (this.bodyMat.emissive.r !== 0) {
+        this.bodyMat.emissive.setRGB(0, 0, 0);
+        this.torsoMat.emissive.setRGB(0, 0, 0);
+      }
+      return;
+    }
+    this.hitFlash -= dt;
+    const t = Math.max(0, this.hitFlash / 0.18);
+    this.bodyMat.emissive.setRGB(t, 0, 0);
+    this.torsoMat.emissive.setRGB(t, 0, 0);
   }
 
   private updateAim(input: Input, camera: THREE.Camera): void {

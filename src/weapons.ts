@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import type { World } from "./world.ts";
+import type { EnemyManager } from "./enemies.ts";
 
 const BULLET_SPEED = 45;
 const BULLET_LIFE = 1.2;
+const BULLET_DAMAGE = 25;
 const POOL_SIZE = 128;
 
 interface Bullet {
@@ -49,7 +51,7 @@ export class BulletSystem {
     }
   }
 
-  update(dt: number, world: World): void {
+  update(dt: number, world: World, enemies: EnemyManager): void {
     for (const b of this.bullets) {
       if (!b.alive) continue;
       b.life -= dt;
@@ -59,6 +61,10 @@ export class BulletSystem {
       }
       b.mesh.position.addScaledVector(b.velocity, dt);
       if (world.collidesPoint(b.mesh.position)) {
+        this.retire(b);
+        continue;
+      }
+      if (enemies.damageAtPoint(b.mesh.position, BULLET_DAMAGE)) {
         this.retire(b);
       }
     }
