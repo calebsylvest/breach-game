@@ -4,12 +4,18 @@ export class Input {
   mouseNdcY = 0;
   firing = false;
   private dashQueued = false;
+  private weaponSwitchQueued: number | null = null;
+  private reloadQueued = false;
 
   constructor(target: HTMLElement) {
     window.addEventListener("keydown", (e) => {
       if (e.code === "Space" || e.code === "ShiftLeft" || e.code === "ShiftRight") {
         if (!this.keys.has(e.code)) this.dashQueued = true;
       }
+      if (e.code === "Digit1") this.weaponSwitchQueued = 0;
+      if (e.code === "Digit2") this.weaponSwitchQueued = 1;
+      if (e.code === "Digit3") this.weaponSwitchQueued = 2;
+      if (e.code === "KeyR" && !this.keys.has("KeyR")) this.reloadQueued = true;
       this.keys.add(e.code);
     });
     window.addEventListener("keyup", (e) => {
@@ -19,6 +25,8 @@ export class Input {
       this.keys.clear();
       this.firing = false;
       this.dashQueued = false;
+      this.weaponSwitchQueued = null;
+      this.reloadQueued = false;
     });
 
     target.addEventListener("mousemove", (e) => {
@@ -40,6 +48,20 @@ export class Input {
   consumeDash(): boolean {
     if (this.dashQueued) {
       this.dashQueued = false;
+      return true;
+    }
+    return false;
+  }
+
+  consumeWeaponSwitch(): number | null {
+    const v = this.weaponSwitchQueued;
+    this.weaponSwitchQueued = null;
+    return v;
+  }
+
+  consumeReload(): boolean {
+    if (this.reloadQueued) {
+      this.reloadQueued = false;
       return true;
     }
     return false;

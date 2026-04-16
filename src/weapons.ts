@@ -3,10 +3,60 @@ import type { World } from "./world.ts";
 import type { EnemyManager } from "./enemies.ts";
 import type { ParticleSystem } from "./particles.ts";
 
-const BULLET_SPEED = 45;
 const BULLET_LIFE = 1.2;
-export const BULLET_BASE_DAMAGE = 25;
 const POOL_SIZE = 128;
+
+export interface WeaponDef {
+  readonly id: "rifle" | "shotgun" | "smg";
+  readonly name: string;
+  readonly damage: number;
+  readonly pellets: number;
+  readonly spread: number;       // half-angle radians per pellet
+  readonly fireInterval: number; // seconds between shots (base, before fireRateMult)
+  readonly bulletSpeed: number;
+  readonly magSize: number;
+  readonly reserveSize: number;
+  readonly reloadTime: number;   // seconds
+}
+
+export const WEAPONS: WeaponDef[] = [
+  {
+    id: "rifle",
+    name: "RIFLE",
+    damage: 25,
+    pellets: 1,
+    spread: 0,
+    fireInterval: 0.1,
+    bulletSpeed: 45,
+    magSize: 30,
+    reserveSize: 90,
+    reloadTime: 1.4,
+  },
+  {
+    id: "shotgun",
+    name: "SHOTGUN",
+    damage: 18,
+    pellets: 8,
+    spread: 0.22,
+    fireInterval: 0.75,
+    bulletSpeed: 38,
+    magSize: 6,
+    reserveSize: 30,
+    reloadTime: 1.8,
+  },
+  {
+    id: "smg",
+    name: "SMG",
+    damage: 10,
+    pellets: 1,
+    spread: 0.06,
+    fireInterval: 0.067,
+    bulletSpeed: 42,
+    magSize: 60,
+    reserveSize: 180,
+    reloadTime: 1.0,
+  },
+];
 
 interface Bullet {
   mesh: THREE.Mesh;
@@ -42,13 +92,13 @@ export class BulletSystem {
     }
   }
 
-  spawn(origin: THREE.Vector3, direction: THREE.Vector3, damage: number): void {
+  spawn(origin: THREE.Vector3, direction: THREE.Vector3, damage: number, speed = 45): void {
     for (const b of this.bullets) {
       if (b.alive) continue;
       b.alive = true;
       b.mesh.visible = true;
       b.mesh.position.copy(origin);
-      b.velocity.copy(direction).multiplyScalar(BULLET_SPEED);
+      b.velocity.copy(direction).multiplyScalar(speed);
       b.life = BULLET_LIFE;
       b.damage = damage;
       return;

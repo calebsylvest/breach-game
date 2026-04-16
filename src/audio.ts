@@ -18,10 +18,11 @@ export class Audio {
     if (ctx.state === "suspended") ctx.resume();
   }
 
-  gunshot(): void {
+  gunshot(kind: "rifle" | "shotgun" | "smg" = "rifle"): void {
     const ctx = this.ensure();
     const now = ctx.currentTime;
-    const buffer = ctx.createBuffer(1, 2048, ctx.sampleRate);
+    const len = kind === "shotgun" ? 3500 : 2048;
+    const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < data.length; i++) {
       data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
@@ -30,12 +31,34 @@ export class Audio {
     src.buffer = buffer;
     const filter = ctx.createBiquadFilter();
     filter.type = "lowpass";
-    filter.frequency.value = 2200;
+    let freqHz: number, gainAmt: number, decay: number;
+    if (kind === "shotgun") {
+      freqHz = 900; gainAmt = 0.32; decay = 0.16;
+    } else if (kind === "smg") {
+      freqHz = 3800; gainAmt = 0.12; decay = 0.05;
+    } else {
+      freqHz = 2200; gainAmt = 0.18; decay = 0.08;
+    }
+    filter.frequency.value = freqHz;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.18, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    gain.gain.setValueAtTime(gainAmt, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + decay);
     src.connect(filter).connect(gain).connect(ctx.destination);
     src.start(now);
+  }
+
+  dryFire(): void {
+    const ctx = this.ensure();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = "square";
+    osc.frequency.value = 300;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.05);
   }
 
   enemyDeath(): void {

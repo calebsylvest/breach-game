@@ -2,6 +2,7 @@ import * as THREE from "three";
 import type { Input } from "./input.ts";
 import type { World } from "./world.ts";
 import { resolveMovement } from "./collision.ts";
+import { WEAPONS, type WeaponDef } from "./weapons.ts";
 
 const PLAYER_RADIUS = 0.4;
 const PLAYER_SPEED = 5;
@@ -33,7 +34,46 @@ export class Player {
   dashTime = 0;
   dashCooldown = 0;
   readonly dashCooldownMax = DASH_COOLDOWN;
+  weaponIndex = 0;
+  reloading = false;
+  reloadTimer = 0;
+  private readonly weaponMag: number[] = WEAPONS.map(w => w.magSize);
+  private readonly weaponReserve: number[] = WEAPONS.map(w => w.reserveSize);
   private readonly dashDir = new THREE.Vector3();
+
+  get mag(): number { return this.weaponMag[this.weaponIndex]; }
+  set mag(v: number) { this.weaponMag[this.weaponIndex] = v; }
+  get reserve(): number { return this.weaponReserve[this.weaponIndex]; }
+  set reserve(v: number) { this.weaponReserve[this.weaponIndex] = v; }
+
+  get weaponName(): string {
+    return WEAPONS[this.weaponIndex].name;
+  }
+
+  switchWeapon(idx: number): void {
+    if (idx === this.weaponIndex) return;
+    this.weaponIndex = idx;
+    this.reloading = false;
+    this.reloadTimer = 0;
+  }
+
+  startReload(def: WeaponDef): void {
+    if (this.reloading || this.mag >= def.magSize || this.reserve <= 0) return;
+    this.reloading = true;
+    this.reloadTimer = def.reloadTime;
+  }
+
+  updateReload(dt: number, def: WeaponDef): void {
+    if (!this.reloading) return;
+    this.reloadTimer -= dt;
+    if (this.reloadTimer <= 0) {
+      const needed = def.magSize - this.mag;
+      const take = Math.min(needed, this.reserve);
+      this.mag += take;
+      this.reserve -= take;
+      this.reloading = false;
+    }
+  }
 
   get maxHp(): number {
     return PLAYER_MAX_HP + this.stats.maxHpBonus;
@@ -49,6 +89,13 @@ export class Player {
     this.dashTime = 0;
     this.dashCooldown = 0;
     this.lastDamageSource = "unknown";
+    this.weaponIndex = 0;
+    for (let i = 0; i < WEAPONS.length; i++) {
+      this.weaponMag[i] = WEAPONS[i].magSize;
+      this.weaponReserve[i] = WEAPONS[i].reserveSize;
+    }
+    this.reloading = false;
+    this.reloadTimer = 0;
   }
 
   get isDashing(): boolean {

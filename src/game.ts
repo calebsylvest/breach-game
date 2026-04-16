@@ -3,7 +3,7 @@ import { createScene, type SceneCtx } from "./scene.ts";
 import { Input } from "./input.ts";
 import { Player } from "./player.ts";
 import { World, type Room } from "./world.ts";
-import { BulletSystem, BULLET_BASE_DAMAGE } from "./weapons.ts";
+import { BulletSystem, WEAPONS } from "./weapons.ts";
 import { EnemyManager, type EnemyType } from "./enemies.ts";
 import { Hud } from "./hud.ts";
 import { rollUpgrades, type Upgrade } from "./upgrades.ts";
@@ -12,7 +12,6 @@ import { ParticleSystem } from "./particles.ts";
 
 const CAMERA_OFFSET = new THREE.Vector3(16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
-const FIRE_INTERVAL_BASE = 60 / 600;
 
 type RoomState = "untouched" | "active" | "cleared";
 
@@ -28,6 +27,7 @@ export class Game {
   private readonly audio = new Audio();
   private readonly followTarget = new THREE.Vector3();
   private readonly muzzle = new THREE.Vector3();
+  private readonly fireDir = new THREE.Vector3();
   private readonly roomStates = new Map<Room, RoomState>();
   private last = performance.now();
   private fireCooldown = 0;
@@ -155,31 +155,59 @@ export class Game {
     this.ctx.camera.lookAt(this.followTarget);
     this.updateLight();
 
+    // Weapon switch
+    const switchTo = this.input.consumeWeaponSwitch();
+    if (switchTo !== null) this.player.switchWeapon(switchTo);
+
+    // Reload
+    const weapon = WEAPONS[this.player.weaponIndex];
+    if (this.input.consumeReload()) this.player.startReload(weapon);
+    this.player.updateReload(dt, weapon);
+
+    // Auto-reload on empty
+    if (this.player.mag === 0 && !this.player.reloading && this.player.reserve > 0) {
+      this.player.startReload(weapon);
+    }
+
     this.fireCooldown -= dt;
-    const fireInterval = FIRE_INTERVAL_BASE / this.player.stats.fireRateMult;
+    const fireInterval = weapon.fireInterval / this.player.stats.fireRateMult;
     if (
       this.player.hp > 0 &&
       !this.winShown &&
       this.input.firing &&
-      this.fireCooldown <= 0
+      this.fireCooldown <= 0 &&
+      !this.player.reloading
     ) {
-      this.muzzle.set(
-        this.player.position.x + this.player.aim.x * 0.9,
-        1.15,
-        this.player.position.z + this.player.aim.z * 0.9,
-      );
-      const damage = BULLET_BASE_DAMAGE * this.player.stats.damageMult;
-      this.bullets.spawn(this.muzzle, this.player.aim, damage);
-      this.particles.muzzle(
-        this.muzzle.x,
-        this.muzzle.y,
-        this.muzzle.z,
-        this.player.aim.x,
-        this.player.aim.z,
-      );
-      this.fireCooldown = fireInterval;
-      this.audio.gunshot();
-      this.triggerShake(0.08, 0.08);
+      if (this.player.mag > 0) {
+        this.player.mag--;
+        const damage = weapon.damage * this.player.stats.damageMult;
+        const muzzleX = this.player.position.x + this.player.aim.x * 0.9;
+        const muzzleZ = this.player.position.z + this.player.aim.z * 0.9;
+        this.muzzle.set(muzzleX, 1.15, muzzleZ);
+        for (let p = 0; p < weapon.pellets; p++) {
+          let dx = this.player.aim.x;
+          let dz = this.player.aim.z;
+          if (weapon.spread > 0) {
+            const angle = (Math.random() - 0.5) * weapon.spread * 2;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            const ndx = dx * cos - dz * sin;
+            const ndz = dx * sin + dz * cos;
+            dx = ndx;
+            dz = ndz;
+          }
+          this.fireDir.set(dx, 0, dz);
+          this.bullets.spawn(this.muzzle, this.fireDir, damage, weapon.bulletSpeed);
+        }
+        this.particles.muzzle(muzzleX, 1.15, muzzleZ, this.player.aim.x, this.player.aim.z);
+        this.fireCooldown = fireInterval;
+        this.audio.gunshot(weapon.id);
+        this.triggerShake(0.08, 0.08);
+      } else {
+        // Empty click — dry fire once per cooldown cycle
+        this.fireCooldown = fireInterval;
+        this.audio.dryFire();
+      }
     }
 
     this.bullets.update(dt, this.world, this.enemies, this.particles);
@@ -256,6 +284,7 @@ export class Game {
   private openUpgradeScreen(): void {
     const cards = rollUpgrades(3);
     this.paused = true;
+    this.input.firing = false; // mouseup won't fire on canvas while overlay is open
     this.hud.showUpgrade(cards, (picked: Upgrade) => {
       picked.apply(this.player);
       this.hud.hideUpgrade();

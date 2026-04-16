@@ -17,6 +17,8 @@ export class Hud {
   private readonly dashFill: HTMLElement;
   private readonly killsEl: HTMLElement;
   private readonly roomEl: HTMLElement;
+  private readonly ammoEl: HTMLElement;
+  private readonly weaponEl: HTMLElement;
   private readonly deathEl: HTMLElement;
   private readonly deathSub: HTMLElement;
   private readonly deathRestart: HTMLButtonElement;
@@ -40,6 +42,8 @@ export class Hud {
     this.dashFill = required("dash-fill");
     this.killsEl = required("kills");
     this.roomEl = required("room-label");
+    this.ammoEl = required("ammo");
+    this.weaponEl = required("weapon-name");
     this.deathEl = required("death");
     this.deathSub = required("death-sub");
     this.deathRestart = required("death-restart") as HTMLButtonElement;
@@ -74,6 +78,14 @@ export class Hud {
     this.killsEl.textContent = `kills ${enemies.killCount}`;
     const current = currentRoom(world, player.position.x, player.position.z);
     this.roomEl.textContent = current ? current.type : "void";
+    this.weaponEl.textContent = player.weaponName;
+    if (player.reloading) {
+      this.ammoEl.textContent = "RELOADING...";
+      this.ammoEl.style.color = "#d4c066";
+    } else {
+      this.ammoEl.textContent = `${player.mag} / ${player.reserve}`;
+      this.ammoEl.style.color = player.mag === 0 ? "#ff4b4b" : "";
+    }
     this.drawMinimap(world, player.position.x, player.position.z);
   }
 
