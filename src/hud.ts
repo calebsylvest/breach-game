@@ -32,6 +32,8 @@ export class Hud {
   private readonly upgradeCards: HTMLElement;
   private readonly titleEl: HTMLElement;
   private readonly titlePlay: HTMLButtonElement;
+  private readonly callsignInput: HTMLInputElement;
+  private readonly callsignLabel: HTMLElement;
   private readonly levelTransEl: HTMLElement;
   private readonly levelTransNum: HTMLElement;
   private readonly levelTransName: HTMLElement;
@@ -68,6 +70,8 @@ export class Hud {
     this.titleEl = required("title");
     this.titlePlay = required("title-play") as HTMLButtonElement;
     this.titlePlay.addEventListener("click", onTitlePlay);
+    this.callsignInput = required("callsign-input") as HTMLInputElement;
+    this.callsignLabel = required("callsign-label");
     this.levelTransEl = required("level-trans");
     this.levelTransNum = required("level-trans-num");
     this.levelTransName = required("level-trans-name");
@@ -75,7 +79,13 @@ export class Hud {
   }
 
   hideTitle(): void {
+    const name = this.callsignInput.value.trim().toUpperCase() || "SOLDIER";
+    this.callsignLabel.textContent = name;
     this.titleEl.classList.add("hidden");
+  }
+
+  get callsign(): string {
+    return this.callsignLabel.textContent || "SOLDIER";
   }
 
   showLevelTransition(levelNumber: number, name: string, onContinue: () => void): void {
@@ -169,7 +179,7 @@ export class Hud {
   showDeath(cause: string, kills: number, elapsedSec: number, level: number, upgrades: number): void {
     const m = Math.floor(elapsedSec / 60);
     const s = Math.floor(elapsedSec % 60);
-    this.deathSub.textContent = `killed by ${cause}`;
+    this.deathSub.textContent = `${this.callsign} — killed by ${cause}`;
     this.deathStats.textContent = `kills ${kills} · time ${m}:${s.toString().padStart(2, "0")} · level ${level} · upgrades ${upgrades}`;
     this.deathEl.classList.add("show");
   }

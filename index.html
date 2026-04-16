@@ -276,7 +276,7 @@
     <div id="game"></div>
     <div id="hud">
       <div class="corner tl">
-        <div class="dim">soldier</div>
+        <div class="dim" id="callsign-label">soldier</div>
         <div id="hp">HP 100 / 100</div>
         <div class="bar"><div class="bar-fill" id="hp-fill" style="width: 100%"></div></div>
       </div>
@@ -328,6 +328,13 @@
       <div class="panel">
         <h1>BREACH</h1>
         <div class="tagline">top-down. one life. extract or die.</div>
+        <div style="margin-bottom:20px">
+          <label for="callsign-input" style="display:block; font-size:10px; letter-spacing:0.22em; opacity:0.5; margin-bottom:6px">CALLSIGN</label>
+          <input id="callsign-input" type="text" value="SOLDIER" maxlength="12"
+            style="background:#0d1420; border:1px solid #2a3446; color:#d9e2ec; font:inherit;
+                   font-size:15px; letter-spacing:0.18em; text-transform:uppercase;
+                   padding:8px 14px; width:180px; text-align:center; outline:none;">
+        </div>
         <button id="title-play">play</button>
         <div class="controls-hint">WASD move · mouse aim · click fire</div>
       </div>
