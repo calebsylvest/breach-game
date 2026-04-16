@@ -4,7 +4,9 @@ import { Input } from "./input.ts";
 import { Player } from "./player.ts";
 import { World, type Room } from "./world.ts";
 import { BulletSystem, WEAPONS } from "./weapons.ts";
-import { EnemyManager, type EnemyType } from "./enemies.ts";
+import { LEVEL_NAMES } from "./world.ts";
+import { EnemyManager } from "./enemies.ts";
+import type { EnemyType } from "./enemies.ts";
 import { Hud } from "./hud.ts";
 import { rollUpgrades, type Upgrade } from "./upgrades.ts";
 import { Audio } from "./audio.ts";
@@ -13,13 +15,29 @@ import { ParticleSystem } from "./particles.ts";
 const CAMERA_OFFSET = new THREE.Vector3(16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
 
+const ARENA_WAVES: EnemyType[][] = [
+  ["scuttler", "scuttler", "scuttler", "scuttler", "scuttler"],
+  ["scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute"],
+  ["scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute"],
+  ["scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute", "brute", "lurker"],
+  ["scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "spitter", "brute", "brute", "lurker", "lurker"],
+];
+
+const NEST_WAVES: EnemyType[][] = [
+  [],
+  ["nest", "scuttler", "scuttler"],
+  ["nest", "scuttler", "scuttler", "lurker", "lurker"],
+  ["nest", "nest", "scuttler", "scuttler", "scuttler", "lurker", "lurker"],
+  ["nest", "nest", "scuttler", "scuttler", "spitter", "lurker", "lurker", "lurker"],
+];
+
 type RoomState = "untouched" | "active" | "cleared";
 
 export class Game {
   readonly ctx: SceneCtx;
   readonly input: Input;
   readonly player: Player;
-  readonly world: World;
+  world: World;
   readonly bullets: BulletSystem;
   readonly enemies: EnemyManager;
   readonly particles: ParticleSystem;
@@ -33,7 +51,9 @@ export class Game {
   private fireCooldown = 0;
   private deathShown = false;
   private winShown = false;
+  private extractionHit = false;
   private paused = false;
+  private currentLevel = 0;
   private runStart = performance.now();
   private lastHp = 0;
   private lastKillCount = 0;
@@ -96,6 +116,12 @@ export class Game {
   }
 
   restart(): void {
+    // Rebuild world at level 0 (handles mid-run restarts from any level)
+    this.ctx.scene.remove(this.world.group);
+    this.currentLevel = 0;
+    this.world = new World(0);
+    this.ctx.scene.add(this.world.group);
+
     this.player.resetRun();
     this.player.position.copy(this.world.playerSpawn);
     this.player.group.rotation.z = 0;
@@ -108,6 +134,7 @@ export class Game {
     this.enemies.killCount = 0;
     this.deathShown = false;
     this.winShown = false;
+    this.extractionHit = false;
     this.paused = false;
     this.runStart = performance.now();
     this.lastHp = this.player.hp;
@@ -117,8 +144,10 @@ export class Game {
     this.hud.hideDeath();
     this.hud.hideWin();
     this.hud.hideUpgrade();
+    this.hud.hideLevelTransition();
     this.initRoomStates();
     this.followTarget.copy(this.player.position);
+    this.updateLight();
   }
 
   private initRoomStates(): void {
@@ -233,11 +262,21 @@ export class Game {
       this.deathShown = true;
     }
 
-    if (!this.winShown && !this.deathShown && this.playerReachedExtraction()) {
-      const elapsed = (performance.now() - this.runStart) / 1000;
-      this.hud.showWin(this.enemies.killCount, elapsed);
-      this.audio.winTone();
-      this.winShown = true;
+    if (!this.extractionHit && !this.deathShown && this.playerReachedExtraction()) {
+      this.extractionHit = true;
+      if (this.currentLevel >= LEVEL_NAMES.length - 1) {
+        const elapsed = (performance.now() - this.runStart) / 1000;
+        this.hud.showWin(this.enemies.killCount, elapsed);
+        this.audio.winTone();
+        this.winShown = true;
+      } else {
+        this.paused = true;
+        this.input.firing = false;
+        const nextLevel = this.currentLevel + 1;
+        this.hud.showLevelTransition(nextLevel + 1, LEVEL_NAMES[nextLevel], () => {
+          this.advanceLevel(nextLevel);
+        });
+      }
     }
 
     this.ctx.renderer.render(this.ctx.scene, this.ctx.camera);
@@ -271,14 +310,49 @@ export class Game {
   }
 
   private spawnWave(room: Room): void {
-    const plan: EnemyType[] =
-      room.type === "arena"
-        ? ["scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute"]
-        : ["nest", "scuttler", "scuttler", "lurker", "lurker"];
+    const li = Math.min(this.currentLevel, ARENA_WAVES.length - 1);
+    const plan = room.type === "arena" ? ARENA_WAVES[li] : NEST_WAVES[li];
     for (const type of plan) {
       const point = this.world.randomPointInRoom(room, 1.2);
       if (point) this.enemies.spawn(type, point.x, point.z);
     }
+  }
+
+  private advanceLevel(nextLevel: number): void {
+    this.currentLevel = nextLevel;
+
+    // Swap world geometry
+    this.ctx.scene.remove(this.world.group);
+    this.world = new World(this.currentLevel);
+    this.ctx.scene.add(this.world.group);
+
+    // Reposition player
+    this.player.position.copy(this.world.playerSpawn);
+    this.player.group.position.set(this.player.position.x, 0, this.player.position.z);
+    this.player.group.rotation.z = 0;
+
+    // Clear enemies
+    for (const e of this.enemies.enemies) {
+      e.alive = false;
+      e.group.visible = false;
+    }
+
+    // Reset per-level flags
+    this.extractionHit = false;
+    this.deathShown = false;
+    this.fireCooldown = 0;
+    this.shakeTime = 0;
+    this.shakeAmp = 0;
+    this.lastHp = this.player.hp;
+    this.lastKillCount = this.enemies.killCount;
+
+    // Camera snap to new spawn
+    this.followTarget.copy(this.player.position);
+    this.updateLight();
+
+    this.initRoomStates();
+    this.hud.hideLevelTransition();
+    this.paused = false;
   }
 
   private openUpgradeScreen(): void {

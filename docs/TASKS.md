@@ -6,8 +6,8 @@ Living task list tracking build progress against `BREACH_PRD.md`. Update as work
 
 - **Branch:** main
 - **Playable:** yes — title → run → arena wave → upgrade → nest wave → upgrade → extraction → win
-- **Last phase shipped:** Phase 11 (particles)
-- **Next suggested phase:** balance pass or level progression (see Remaining)
+- **Last phase shipped:** Weapons + Level Progression
+- **Next suggested phase:** run stats on win/death screens, then balance pass
 
 ## Done
 
@@ -69,20 +69,21 @@ _None — paused for review._
 - [ ] Confirm project created after April 1, 2026
 
 ### Level Progression (`## World & Level Design — Level Progression`)
-- [ ] Level 2 "Processing Wing" — 6 rooms, narrower corridors, medium alien density
-- [ ] Level 3 "Nest Core" — 7 rooms, more nest rooms
-- [ ] Level 4 "Reactor Depth" — 8 rooms, optional time pressure
-- [ ] Level 5 "Extraction Run" — 9 rooms, max density
-- [ ] Level transition screen on extraction (instead of immediate win)
-- [ ] Difficulty scaling: wave size, enemy HP/speed per level
+- [x] Level 2 "Processing Wing" — 6 rooms, nest introduced
+- [x] Level 3 "Nest Core" — 7 rooms
+- [x] Level 4 "Reactor Depth" — 8 rooms, narrower corridors
+- [x] Level 5 "Extraction Run" — 9 rooms, max density
+- [x] Level transition screen on extraction (instead of immediate win)
+- [x] Difficulty scaling: wave composition scales per level
+- [ ] Enemy HP/speed scaling per level (stretch)
 
 ### Weapons (`## Weapons`)
-- [ ] Ammo system (mag + reserve, reload on R)
-- [ ] Shotgun (spread hitscan)
-- [ ] SMG (fast low-dmg)
+- [x] Ammo system (mag + reserve, reload on R)
+- [x] Shotgun (spread hitscan)
+- [x] SMG (fast low-dmg)
 - [ ] Sniper (piercing, slow)
 - [ ] Grenade launcher (AoE)
-- [ ] Weapon switching (1 / 2 / 3 keys)
+- [x] Weapon switching (1 / 2 / 3 keys)
 
 ### Upgrades (`## Roguelite Upgrade System`)
 - [x] Base pool of offense/defense/utility

@@ -18,14 +18,65 @@ interface RoomSpec {
   depth: number;
 }
 
-const LEVEL_SPEC: RoomSpec[] = [
-  { type: "start", width: 14, depth: 14 },
-  { type: "corridor", width: 6, depth: 4 },
-  { type: "arena", width: 18, depth: 16 },
-  { type: "corridor", width: 6, depth: 4 },
-  { type: "nest", width: 14, depth: 14 },
-  { type: "corridor", width: 6, depth: 4 },
-  { type: "extraction", width: 12, depth: 12 },
+export const LEVEL_NAMES = [
+  "OUTER CORRIDORS",
+  "PROCESSING WING",
+  "NEST CORE",
+  "REACTOR DEPTH",
+  "EXTRACTION RUN",
+];
+
+const LEVEL_SPECS: RoomSpec[][] = [
+  // Level 1 — 5 rooms, tutorial feel
+  [
+    { type: "start",      width: 14, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "arena",      width: 18, depth: 18 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "extraction", width: 12, depth: 12 },
+  ],
+  // Level 2 — 6 rooms, nest introduced
+  [
+    { type: "start",      width: 14, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 4  },
+    { type: "arena",      width: 18, depth: 16 },
+    { type: "corridor",   width: 6,  depth: 4  },
+    { type: "nest",       width: 14, depth: 14 },
+    { type: "extraction", width: 12, depth: 12 },
+  ],
+  // Level 3 — 7 rooms (original layout)
+  [
+    { type: "start",      width: 14, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 4  },
+    { type: "arena",      width: 18, depth: 16 },
+    { type: "corridor",   width: 6,  depth: 4  },
+    { type: "nest",       width: 14, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 4  },
+    { type: "extraction", width: 12, depth: 12 },
+  ],
+  // Level 4 — 8 rooms, double combat, narrow corridors
+  [
+    { type: "start",      width: 14, depth: 12 },
+    { type: "corridor",   width: 6,  depth: 3  },
+    { type: "arena",      width: 18, depth: 16 },
+    { type: "corridor",   width: 6,  depth: 3  },
+    { type: "nest",       width: 14, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 3  },
+    { type: "arena",      width: 16, depth: 16 },
+    { type: "extraction", width: 12, depth: 12 },
+  ],
+  // Level 5 — 9 rooms, max density gauntlet
+  [
+    { type: "start",      width: 14, depth: 12 },
+    { type: "corridor",   width: 5,  depth: 3  },
+    { type: "arena",      width: 20, depth: 16 },
+    { type: "corridor",   width: 5,  depth: 3  },
+    { type: "nest",       width: 16, depth: 14 },
+    { type: "corridor",   width: 5,  depth: 3  },
+    { type: "arena",      width: 18, depth: 16 },
+    { type: "corridor",   width: 5,  depth: 3  },
+    { type: "extraction", width: 12, depth: 12 },
+  ],
 ];
 
 const WALL_THICKNESS = 0.6;
@@ -46,8 +97,8 @@ export class World {
   private readonly extractionBeacon: THREE.Mesh;
   private beaconTime = 0;
 
-  constructor() {
-    this.rooms = this.layoutRooms();
+  constructor(levelIndex = 0) {
+    this.rooms = this.layoutRooms(levelIndex);
     this.bounds = this.computeBounds();
 
     const start = this.rooms[0];
@@ -132,19 +183,20 @@ export class World {
     return null;
   }
 
-  private layoutRooms(): Room[] {
+  private layoutRooms(levelIndex: number): Room[] {
+    const spec = LEVEL_SPECS[Math.min(levelIndex, LEVEL_SPECS.length - 1)];
     const rooms: Room[] = [];
     let cursor = 0;
-    for (const spec of LEVEL_SPEC) {
-      const halfD = spec.depth / 2;
+    for (const s of spec) {
+      const halfD = s.depth / 2;
       rooms.push({
-        type: spec.type,
+        type: s.type,
         minX: cursor,
-        maxX: cursor + spec.width,
+        maxX: cursor + s.width,
         minZ: -halfD,
         maxZ: halfD,
       });
-      cursor += spec.width;
+      cursor += s.width;
     }
     const startCenterX = (rooms[0].minX + rooms[0].maxX) / 2;
     for (const r of rooms) {

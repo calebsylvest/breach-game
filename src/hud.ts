@@ -31,6 +31,11 @@ export class Hud {
   private readonly upgradeCards: HTMLElement;
   private readonly titleEl: HTMLElement;
   private readonly titlePlay: HTMLButtonElement;
+  private readonly levelTransEl: HTMLElement;
+  private readonly levelTransNum: HTMLElement;
+  private readonly levelTransName: HTMLElement;
+  private readonly levelTransBtn: HTMLButtonElement;
+  private levelTransCleanup: (() => void) | null = null;
 
   constructor(
     onDeathRestart: () => void,
@@ -61,10 +66,29 @@ export class Hud {
     this.titleEl = required("title");
     this.titlePlay = required("title-play") as HTMLButtonElement;
     this.titlePlay.addEventListener("click", onTitlePlay);
+    this.levelTransEl = required("level-trans");
+    this.levelTransNum = required("level-trans-num");
+    this.levelTransName = required("level-trans-name");
+    this.levelTransBtn = required("level-trans-btn") as HTMLButtonElement;
   }
 
   hideTitle(): void {
     this.titleEl.classList.add("hidden");
+  }
+
+  showLevelTransition(levelNumber: number, name: string, onContinue: () => void): void {
+    this.levelTransNum.textContent = `LEVEL ${levelNumber}`;
+    this.levelTransName.textContent = name;
+    if (this.levelTransCleanup) this.levelTransCleanup();
+    const handler = () => onContinue();
+    this.levelTransBtn.addEventListener("click", handler, { once: true });
+    this.levelTransCleanup = () => this.levelTransBtn.removeEventListener("click", handler);
+    this.levelTransEl.classList.add("show");
+  }
+
+  hideLevelTransition(): void {
+    this.levelTransEl.classList.remove("show");
+    this.levelTransCleanup = null;
   }
 
   update(player: Player, enemies: EnemyManager, world: World): void {

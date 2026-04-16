@@ -237,6 +237,39 @@
         cursor: pointer;
       }
       #title button:hover { background: #3a82f7; }
+      #level-trans {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(4, 8, 14, 0.9);
+        pointer-events: none;
+      }
+      #level-trans.show { display: flex; }
+      #level-trans .panel {
+        text-align: center;
+        pointer-events: auto;
+      }
+      #level-trans h1 {
+        font-size: 52px;
+        margin: 0 0 8px;
+        color: #66b2ff;
+        letter-spacing: 0.22em;
+      }
+      #level-trans .sub { opacity: 0.55; font-size: 11px; letter-spacing: 0.22em; margin-bottom: 4px; }
+      #level-trans button {
+        margin-top: 28px;
+        background: #2b6cd9;
+        color: #d9e2ec;
+        border: 0;
+        padding: 12px 36px;
+        font: inherit;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      #level-trans button:hover { background: #3a82f7; }
     </style>
   </head>
   <body>
@@ -281,6 +314,13 @@
       <div class="panel">
         <h2>UPGRADE</h2>
         <div id="upgrade-cards"></div>
+      </div>
+    </div>
+    <div id="level-trans">
+      <div class="panel">
+        <div class="sub" id="level-trans-num">LEVEL 2</div>
+        <h1 id="level-trans-name">PROCESSING WING</h1>
+        <button id="level-trans-btn">continue</button>
       </div>
     </div>
     <div id="title">
