@@ -29,53 +29,53 @@ export const LEVEL_NAMES = [
 const LEVEL_SPECS: RoomSpec[][] = [
   // Level 1 — 5 rooms, tutorial feel
   [
-    { type: "start",      width: 14, depth: 14 },
-    { type: "corridor",   width: 6,  depth: 5  },
-    { type: "arena",      width: 18, depth: 18 },
-    { type: "corridor",   width: 6,  depth: 5  },
-    { type: "extraction", width: 12, depth: 12 },
+    { type: "start",      width: 16, depth: 16 },
+    { type: "corridor",   width: 7,  depth: 6  },
+    { type: "arena",      width: 26, depth: 22 },
+    { type: "corridor",   width: 7,  depth: 6  },
+    { type: "extraction", width: 14, depth: 14 },
   ],
   // Level 2 — 6 rooms, nest introduced
   [
-    { type: "start",      width: 14, depth: 14 },
-    { type: "corridor",   width: 6,  depth: 4  },
-    { type: "arena",      width: 18, depth: 16 },
-    { type: "corridor",   width: 6,  depth: 4  },
-    { type: "nest",       width: 14, depth: 14 },
-    { type: "extraction", width: 12, depth: 12 },
+    { type: "start",      width: 16, depth: 16 },
+    { type: "corridor",   width: 7,  depth: 5  },
+    { type: "arena",      width: 26, depth: 22 },
+    { type: "corridor",   width: 7,  depth: 5  },
+    { type: "nest",       width: 20, depth: 18 },
+    { type: "extraction", width: 14, depth: 14 },
   ],
-  // Level 3 — 7 rooms (original layout)
+  // Level 3 — 7 rooms
   [
-    { type: "start",      width: 14, depth: 14 },
-    { type: "corridor",   width: 6,  depth: 4  },
-    { type: "arena",      width: 18, depth: 16 },
-    { type: "corridor",   width: 6,  depth: 4  },
-    { type: "nest",       width: 14, depth: 14 },
-    { type: "corridor",   width: 6,  depth: 4  },
-    { type: "extraction", width: 12, depth: 12 },
+    { type: "start",      width: 16, depth: 16 },
+    { type: "corridor",   width: 7,  depth: 5  },
+    { type: "arena",      width: 28, depth: 24 },
+    { type: "corridor",   width: 7,  depth: 5  },
+    { type: "nest",       width: 22, depth: 18 },
+    { type: "corridor",   width: 7,  depth: 5  },
+    { type: "extraction", width: 14, depth: 14 },
   ],
-  // Level 4 — 8 rooms, double combat, narrow corridors
+  // Level 4 — 8 rooms, double combat
   [
-    { type: "start",      width: 14, depth: 12 },
-    { type: "corridor",   width: 6,  depth: 3  },
-    { type: "arena",      width: 18, depth: 16 },
-    { type: "corridor",   width: 6,  depth: 3  },
-    { type: "nest",       width: 14, depth: 14 },
-    { type: "corridor",   width: 6,  depth: 3  },
-    { type: "arena",      width: 16, depth: 16 },
-    { type: "extraction", width: 12, depth: 12 },
+    { type: "start",      width: 16, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "arena",      width: 28, depth: 24 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "nest",       width: 22, depth: 18 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "arena",      width: 26, depth: 22 },
+    { type: "extraction", width: 14, depth: 14 },
   ],
   // Level 5 — 9 rooms, max density gauntlet
   [
-    { type: "start",      width: 14, depth: 12 },
-    { type: "corridor",   width: 5,  depth: 3  },
-    { type: "arena",      width: 20, depth: 16 },
-    { type: "corridor",   width: 5,  depth: 3  },
-    { type: "nest",       width: 16, depth: 14 },
-    { type: "corridor",   width: 5,  depth: 3  },
-    { type: "arena",      width: 18, depth: 16 },
-    { type: "corridor",   width: 5,  depth: 3  },
-    { type: "extraction", width: 12, depth: 12 },
+    { type: "start",      width: 16, depth: 14 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "arena",      width: 30, depth: 26 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "nest",       width: 24, depth: 20 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "arena",      width: 28, depth: 24 },
+    { type: "corridor",   width: 6,  depth: 5  },
+    { type: "extraction", width: 14, depth: 14 },
   ],
 ];
 
@@ -328,19 +328,59 @@ export class World {
 
   private buildCover(): void {
     for (const room of this.rooms) {
-      if (room.type !== "arena" && room.type !== "nest") continue;
-      const cx = (room.minX + room.maxX) / 2;
-      const cz = (room.minZ + room.maxZ) / 2;
-      const qw = (room.maxX - room.minX) / 4;
-      const qd = (room.maxZ - room.minZ) / 4;
-      this.addCoverBox(cx - qw, cz - qd, 1.4, 1.4);
-      this.addCoverBox(cx + qw, cz - qd, 1.4, 1.4);
-      this.addCoverBox(cx - qw, cz + qd, 1.4, 1.4);
-      this.addCoverBox(cx + qw, cz + qd, 1.4, 1.4);
-      if (room.type === "nest") {
-        this.addCoverBox(cx, cz + qd * 1.3, 2.2, 1.0);
-      }
+      if (room.type === "arena") this.buildArenaCover(room);
+      else if (room.type === "nest") this.buildNestCover(room);
     }
+  }
+
+  private buildArenaCover(room: Room): void {
+    const cx = (room.minX + room.maxX) / 2;
+    const cz = (room.minZ + room.maxZ) / 2;
+    const hw = (room.maxX - room.minX) / 2;
+    const hd = (room.maxZ - room.minZ) / 2;
+
+    // Four corner pillars — sturdy square cover
+    const px = hw * 0.52;
+    const pz = hd * 0.52;
+    this.addCoverBox(cx - px, cz - pz, 1.6, 1.6);
+    this.addCoverBox(cx + px, cz - pz, 1.6, 1.6);
+    this.addCoverBox(cx - px, cz + pz, 1.6, 1.6);
+    this.addCoverBox(cx + px, cz + pz, 1.6, 1.6);
+
+    // Mid-wall cover segments on each side — L-shaped pairs
+    const mx = hw * 0.28;
+    const mz = hd * 0.28;
+    // North and south mid barriers (long side along X)
+    this.addCoverBox(cx - mx, cz - hd * 0.74, 3.2, 0.9);
+    this.addCoverBox(cx + mx, cz + hd * 0.74, 3.2, 0.9);
+    // East and west mid barriers (long side along Z)
+    this.addCoverBox(cx - hw * 0.74, cz + mz, 0.9, 3.2);
+    this.addCoverBox(cx + hw * 0.74, cz - mz, 0.9, 3.2);
+
+    // Central low cover — two boxes flanking center
+    this.addCoverBox(cx - mx * 0.7, cz, 0.9, 2.8, 0.9);
+    this.addCoverBox(cx + mx * 0.7, cz, 0.9, 2.8, 0.9);
+  }
+
+  private buildNestCover(room: Room): void {
+    const cx = (room.minX + room.maxX) / 2;
+    const cz = (room.minZ + room.maxZ) / 2;
+    const hw = (room.maxX - room.minX) / 2;
+    const hd = (room.maxZ - room.minZ) / 2;
+
+    // Organic cluster — varied heights and sizes
+    const ox = hw * 0.42;
+    const oz = hd * 0.42;
+    this.addCoverBox(cx - ox, cz - oz, 2.0, 1.2, 1.4);
+    this.addCoverBox(cx + ox, cz - oz, 1.2, 2.0, 1.4);
+    this.addCoverBox(cx - ox, cz + oz, 1.2, 2.0, 1.4);
+    this.addCoverBox(cx + ox, cz + oz, 2.0, 1.2, 1.4);
+
+    // Central ring blockers
+    this.addCoverBox(cx,       cz - hd * 0.55, 3.6, 1.0, 1.1);
+    this.addCoverBox(cx,       cz + hd * 0.55, 3.6, 1.0, 1.1);
+    this.addCoverBox(cx - hw * 0.55, cz, 1.0, 3.6, 1.1);
+    this.addCoverBox(cx + hw * 0.55, cz, 1.0, 3.6, 1.1);
   }
 
   private buildExtractionPad(): THREE.Mesh {

@@ -13,7 +13,7 @@ import { Audio } from "./audio.ts";
 import { ParticleSystem } from "./particles.ts";
 import { LootSystem } from "./loot.ts";
 
-const CAMERA_OFFSET = new THREE.Vector3(16, 20, 16);
+const CAMERA_OFFSET = new THREE.Vector3(-16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
 
 const ARENA_WAVES: EnemyType[][] = [
