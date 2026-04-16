@@ -360,6 +360,10 @@ export class World {
     // Central low cover — two boxes flanking center
     this.addCoverBox(cx - mx * 0.7, cz, 0.9, 2.8, 0.9);
     this.addCoverBox(cx + mx * 0.7, cz, 0.9, 2.8, 0.9);
+
+    // Extra scatter — break long diagonal sightlines in larger rooms
+    this.addCoverBox(cx - hw * 0.36, cz - hd * 0.36, 1.0, 1.0, 1.0);
+    this.addCoverBox(cx + hw * 0.36, cz + hd * 0.36, 1.0, 1.0, 1.0);
   }
 
   private buildNestCover(room: Room): void {

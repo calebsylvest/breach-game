@@ -28,10 +28,10 @@ interface TypeDef {
 const TYPES: Record<EnemyType, TypeDef> = {
   scuttler: {
     maxHp: 50,
-    speed: 4.8,
+    speed: 4.6,
     radius: 0.38,
     contactDamage: 12,
-    contactCooldown: 0.65,
+    contactCooldown: 0.75,
     behavior: "chase",
     aggroRange: 8,
   },
@@ -55,8 +55,8 @@ const TYPES: Record<EnemyType, TypeDef> = {
     preferredDistance: 9,
     retreatDistance: 5,
     attackRange: 16,
-    attackCooldown: 1.4,
-    attackDamage: 28,
+    attackCooldown: 1.5,
+    attackDamage: 20,
   },
   lurker: {
     maxHp: 150,

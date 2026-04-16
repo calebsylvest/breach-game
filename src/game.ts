@@ -279,13 +279,11 @@ export class Game {
     this.particles.update(dt);
     this.loot.update(dt, this.player.position);
 
-    // Floor pickups — auto-collect on proximity
+    // Floor pickups — auto-collect on proximity (skip when dead)
     if (this.player.hp > 0) {
       const collected = this.pickups.update(dt, this.player);
       if (collected === "health") this.audio.playerHeal();
       else if (collected === "ammo") this.audio.ammoPickup();
-    } else {
-      this.pickups.update(dt, this.player);
     }
 
     // Loot case interaction — E key opens nearest case in range
