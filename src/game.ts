@@ -159,10 +159,26 @@ export class Game {
 
   private initRoomStates(): void {
     this.roomStates.clear();
+    // Clear all existing enemies
+    for (const e of this.enemies.enemies) {
+      e.alive = false;
+      e.group.visible = false;
+    }
+    // Pre-spawn enemies into rooms — they start idle (aggroed=false)
     for (const room of this.world.rooms) {
       if (room.type === "arena" || room.type === "nest") {
         this.roomStates.set(room, "untouched");
+        this.preSpawnRoom(room);
       }
+    }
+  }
+
+  private preSpawnRoom(room: Room): void {
+    const li = Math.min(this.currentLevel, ARENA_WAVES.length - 1);
+    const plan = room.type === "arena" ? ARENA_WAVES[li] : NEST_WAVES[li];
+    for (const type of plan) {
+      const point = this.world.randomPointInRoom(room, 1.5);
+      if (point) this.enemies.spawn(type, point.x, point.z, false);
     }
   }
 
@@ -315,18 +331,17 @@ export class Game {
 
   private updateCombatRooms(): void {
     const room = this.currentRoom();
-    if (room) {
-      const state = this.roomStates.get(room);
-      if (state === "untouched") {
-        this.spawnWave(room);
-        this.roomStates.set(room, "active");
-      }
+    if (room && this.roomStates.get(room) === "untouched") {
+      this.roomStates.set(room, "active");
     }
     for (const [r, state] of this.roomStates) {
-      if (state === "active" && this.enemies.aliveCount() === 0) {
-        this.roomStates.set(r, "cleared");
-        break;
-      }
+      if (state !== "active") continue;
+      const anyAlive = this.enemies.enemies.some(
+        e => e.alive &&
+          e.position.x >= r.minX && e.position.x <= r.maxX &&
+          e.position.z >= r.minZ && e.position.z <= r.maxZ,
+      );
+      if (!anyAlive) this.roomStates.set(r, "cleared");
     }
   }
 
@@ -339,14 +354,6 @@ export class Game {
     return null;
   }
 
-  private spawnWave(room: Room): void {
-    const li = Math.min(this.currentLevel, ARENA_WAVES.length - 1);
-    const plan = room.type === "arena" ? ARENA_WAVES[li] : NEST_WAVES[li];
-    for (const type of plan) {
-      const point = this.world.randomPointInRoom(room, 1.2);
-      if (point) this.enemies.spawn(type, point.x, point.z);
-    }
-  }
 
   private advanceLevel(nextLevel: number): void {
     this.currentLevel = nextLevel;

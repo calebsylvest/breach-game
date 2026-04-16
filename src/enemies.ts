@@ -14,6 +14,7 @@ interface TypeDef {
   contactDamage: number;
   contactCooldown: number;
   behavior: Behavior;
+  aggroRange: number;      // distance at which enemy notices player
   preferredDistance?: number;
   retreatDistance?: number;
   attackRange?: number;
@@ -32,6 +33,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
     contactDamage: 10,
     contactCooldown: 0.7,
     behavior: "chase",
+    aggroRange: 8,
   },
   brute: {
     maxHp: 250,
@@ -40,6 +42,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
     contactDamage: 40,
     contactCooldown: 1.2,
     behavior: "chase",
+    aggroRange: 11,
   },
   spitter: {
     maxHp: 80,
@@ -48,6 +51,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
     contactDamage: 0,
     contactCooldown: 0,
     behavior: "keepDistance",
+    aggroRange: 15,
     preferredDistance: 9,
     retreatDistance: 5,
     attackRange: 16,
@@ -61,6 +65,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
     contactDamage: 50,
     contactCooldown: 2.0,
     behavior: "ambush",
+    aggroRange: 5,
     ambushRevealRange: 5,
   },
   nest: {
@@ -70,6 +75,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
     contactDamage: 0,
     contactCooldown: 0,
     behavior: "stationary",
+    aggroRange: 0,
     spawnType: "scuttler",
     spawnInterval: 4,
   },
@@ -78,6 +84,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
 interface Enemy {
   type: EnemyType;
   alive: boolean;
+  aggroed: boolean;
   position: THREE.Vector3;
   hp: number;
   contactTimer: number;
@@ -117,7 +124,9 @@ export class EnemyManager {
     return n;
   }
 
-  spawn(type: EnemyType, x: number, z: number): Enemy {
+  // aggroed=true for enemies that are immediately hostile (nest spawns, wave-spawned mid-combat)
+  // aggroed=false for pre-spawned enemies waiting in rooms
+  spawn(type: EnemyType, x: number, z: number, aggroed = true): void {
     let e = this.enemies.find((en) => !en.alive && en.type === type);
     if (!e) {
       e = this.create(type);
@@ -126,6 +135,7 @@ export class EnemyManager {
     }
     const def = TYPES[type];
     e.alive = true;
+    e.aggroed = aggroed || def.behavior === "stationary";
     e.group.visible = true;
     e.position.set(x, 0, z);
     e.group.position.copy(e.position);
@@ -137,7 +147,6 @@ export class EnemyManager {
     e.hitFlash = 0;
     e.bodyMat.emissive.setRGB(0, 0, 0);
     this.applyLurkerVisibility(e);
-    return e;
   }
 
   update(dt: number, player: Player, world: World): void {
@@ -187,10 +196,23 @@ export class EnemyManager {
   private damage(e: Enemy, amount: number): void {
     e.hp -= amount;
     e.hitFlash = HIT_FLASH_DURATION;
+    e.aggroed = true;
     if (e.hp <= 0) {
       e.alive = false;
       e.group.visible = false;
       this.killCount++;
+    } else {
+      this.alarmNearby(e.position, 7);
+    }
+  }
+
+  private alarmNearby(pos: THREE.Vector3, range: number): void {
+    const r2 = range * range;
+    for (const other of this.enemies) {
+      if (!other.alive || other.aggroed) continue;
+      const dx = other.position.x - pos.x;
+      const dz = other.position.z - pos.z;
+      if (dx * dx + dz * dz < r2) other.aggroed = true;
     }
   }
 
@@ -200,6 +222,7 @@ export class EnemyManager {
     return {
       type,
       alive: false,
+      aggroed: false,
       position: new THREE.Vector3(),
       hp: 0,
       contactTimer: 0,
@@ -219,6 +242,26 @@ export class EnemyManager {
     const dz = player.position.z - e.position.z;
     const distSq = dx * dx + dz * dz;
     const dist = Math.sqrt(distSq);
+
+    // Aggro check — enemy activates when player enters its detection range
+    if (!e.aggroed && def.aggroRange > 0 && dist < def.aggroRange) {
+      e.aggroed = true;
+    }
+
+    // Hit flash — runs even when idle
+    if (e.hitFlash > 0) {
+      e.hitFlash -= dt;
+      const t = Math.max(0, e.hitFlash / HIT_FLASH_DURATION);
+      e.bodyMat.emissive.setRGB(t, t * 0.9, t * 0.9);
+    } else if (e.bodyMat.emissive.r !== 0) {
+      e.bodyMat.emissive.setRGB(0, 0, 0);
+    }
+
+    // Idle enemies don't move or attack (lurkers stay hidden)
+    if (!e.aggroed) {
+      if (def.behavior === "ambush") this.applyLurkerVisibility(e);
+      return;
+    }
 
     let moveX = 0;
     let moveZ = 0;
@@ -296,20 +339,13 @@ export class EnemyManager {
           def.spawnType,
           e.position.x + Math.cos(angle) * r,
           e.position.z + Math.sin(angle) * r,
+          true, // nest-spawned enemies are immediately hostile
         );
       }
     }
 
     if (def.behavior === "ambush") {
       this.applyLurkerVisibility(e);
-    }
-
-    if (e.hitFlash > 0) {
-      e.hitFlash -= dt;
-      const t = Math.max(0, e.hitFlash / HIT_FLASH_DURATION);
-      e.bodyMat.emissive.setRGB(t, t * 0.9, t * 0.9);
-    } else if (e.bodyMat.emissive.r !== 0) {
-      e.bodyMat.emissive.setRGB(0, 0, 0);
     }
   }
 
