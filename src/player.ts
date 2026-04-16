@@ -17,10 +17,11 @@ export interface Stats {
   fireRateMult: number;
   speedMult: number;
   maxHpBonus: number;
+  dashCooldownMult: number;
 }
 
 export function makeStats(): Stats {
-  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0 };
+  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0, dashCooldownMult: 1 };
 }
 
 export class Player {
@@ -219,7 +220,7 @@ export class Player {
       this.dashDir.set(this.aim.x, 0, this.aim.z);
     }
     this.dashTime = DASH_DURATION;
-    this.dashCooldown = DASH_COOLDOWN;
+    this.dashCooldown = DASH_COOLDOWN * this.stats.dashCooldownMult;
   }
 
   private applyDashStep(dt: number, world: World): void {
