@@ -13,7 +13,6 @@ export interface LootCase {
   readonly contents: Upgrade[];
   opened: boolean;
   readonly baseMat: THREE.MeshStandardMaterial;
-  readonly glow: THREE.PointLight;
 }
 
 export class LootSystem {
@@ -62,10 +61,6 @@ export class LootSystem {
     latch.position.set(0.37, 0.48, 0);
     grp.add(latch);
 
-    const glow = new THREE.PointLight(0x66ff88, 1.8, 4);
-    glow.position.set(0, 0.8, 0);
-    grp.add(glow);
-
     grp.position.set(x, 0, z);
     this.group.add(grp);
 
@@ -75,7 +70,6 @@ export class LootSystem {
       contents: rollUpgrades(3),
       opened: false,
       baseMat,
-      glow,
     });
   }
 
@@ -87,11 +81,10 @@ export class LootSystem {
       const dz = playerPos.z - c.position.z;
       const dist = Math.sqrt(dx * dx + dz * dz);
       const inRange = dist < INTERACT_RANGE;
-      // Pulse glow when in range
-      c.glow.intensity = inRange
-        ? 2.2 + Math.sin(t * 4) * 0.6
-        : 1.8;
-      c.baseMat.emissiveIntensity = inRange ? 0.7 : 0.4;
+      // Pulse emissive when in range
+      c.baseMat.emissiveIntensity = inRange
+        ? 0.6 + Math.sin(t * 4) * 0.25
+        : 0.3;
     }
   }
 
@@ -112,10 +105,19 @@ export class LootSystem {
     c.opened = true;
     c.baseMat.color.setHex(0x1a2218);
     c.baseMat.emissiveIntensity = 0;
-    c.glow.intensity = 0;
   }
 
   dispose(parent: THREE.Scene): void {
+    this.group.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          for (const m of obj.material) m.dispose();
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
     parent.remove(this.group);
   }
 

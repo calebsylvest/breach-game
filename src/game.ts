@@ -135,6 +135,7 @@ export class Game {
   restart(): void {
     // Rebuild world at level 0 (handles mid-run restarts from any level)
     this.ctx.scene.remove(this.world.group);
+    this.world.dispose();
     this.currentLevel = 0;
     this.world = new World(0);
     this.ctx.scene.add(this.world.group);
@@ -377,6 +378,7 @@ export class Game {
 
     // Swap world geometry and loot
     this.ctx.scene.remove(this.world.group);
+    this.world.dispose();
     this.world = new World(this.currentLevel);
     this.ctx.scene.add(this.world.group);
     this.loot.reset(this.world, this.ctx.scene);

@@ -50,8 +50,8 @@ export class PickupSystem {
       // Red cross shape — two overlapping boxes
       const mat = new THREE.MeshStandardMaterial({
         color: 0xdd2244,
-        emissive: 0xaa1133,
-        emissiveIntensity: 0.8,
+        emissive: 0xcc1133,
+        emissiveIntensity: 1.2,
         roughness: 0.4,
       });
       const h = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.44, 0.1), mat);
@@ -59,29 +59,20 @@ export class PickupSystem {
       h.rotation.x = Math.PI / 2;
       v.rotation.x = Math.PI / 2;
       grp.add(h, v);
-
-      const light = new THREE.PointLight(0xff2244, 1.2, 3.5);
-      light.position.y = 0.3;
-      grp.add(light);
     } else {
       // Gold ammo box
       const mat = new THREE.MeshStandardMaterial({
         color: 0xc8901a,
-        emissive: 0x8a5c00,
-        emissiveIntensity: 0.7,
+        emissive: 0x7a4800,
+        emissiveIntensity: 1.0,
         roughness: 0.5,
         metalness: 0.4,
       });
       const box = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.22), mat);
-      // Stripe line across the box
       const stripeMat = new THREE.MeshStandardMaterial({ color: 0x2a1a00, roughness: 0.9 });
       const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.24), stripeMat);
       stripe.position.y = 0.01;
       grp.add(box, stripe);
-
-      const light = new THREE.PointLight(0xffaa22, 1.0, 3.0);
-      light.position.y = 0.3;
-      grp.add(light);
     }
 
     grp.position.set(x, 0.35, z);
@@ -134,7 +125,21 @@ export class PickupSystem {
     }
   }
 
+  private disposeGroup(): void {
+    this.group.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          for (const m of obj.material) m.dispose();
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
+  }
+
   reset(world: World, parent: THREE.Scene): void {
+    this.disposeGroup();
     parent.remove(this.group);
     this.pickups.length = 0;
     this.group.clear();
@@ -143,6 +148,7 @@ export class PickupSystem {
   }
 
   dispose(parent: THREE.Scene): void {
+    this.disposeGroup();
     parent.remove(this.group);
   }
 }

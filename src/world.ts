@@ -246,8 +246,6 @@ export class World {
     const mat = new THREE.MeshStandardMaterial({ color: 0x3a4658, roughness: 0.85 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, h / 2, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
     this.group.add(mesh);
     this.addCollider(x, z, sx, sz);
   }
@@ -425,6 +423,19 @@ export class World {
     this.group.add(light);
 
     return beacon;
+  }
+
+  dispose(): void {
+    this.group.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          for (const m of obj.material) m.dispose();
+        } else {
+          obj.material.dispose();
+        }
+      }
+    });
   }
 }
 
