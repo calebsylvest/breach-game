@@ -313,9 +313,17 @@
     </div>
     <div id="upgrade">
       <div class="panel">
-        <h2>UPGRADE</h2>
+        <div class="sub" id="upgrade-label" style="font-size:10px; letter-spacing:0.22em; opacity:0.5; margin-bottom:10px">LOOT CASE</div>
+        <h2 id="upgrade-title">SELECT ITEM</h2>
         <div id="upgrade-cards"></div>
+        <button id="upgrade-close" style="margin-top:18px; background:transparent; color:#d9e2ec; border:1px solid #2a3446;
+          padding:8px 24px; font:inherit; font-size:11px; letter-spacing:0.18em; text-transform:uppercase;
+          cursor:pointer; opacity:0.6;">close case</button>
       </div>
+    </div>
+    <div id="interact-hint" style="display:none; position:fixed; bottom:50%; left:50%; transform:translate(-50%, 60px);
+      font-size:11px; letter-spacing:0.18em; color:#66ff88; opacity:0.85; pointer-events:none; text-transform:uppercase;">
+      click · open case
     </div>
     <div id="level-trans">
       <div class="panel">

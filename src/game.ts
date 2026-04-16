@@ -8,9 +8,10 @@ import { LEVEL_NAMES } from "./world.ts";
 import { EnemyManager } from "./enemies.ts";
 import type { EnemyType } from "./enemies.ts";
 import { Hud } from "./hud.ts";
-import { rollUpgrades, type Upgrade } from "./upgrades.ts";
+import type { Upgrade } from "./upgrades.ts";
 import { Audio } from "./audio.ts";
 import { ParticleSystem } from "./particles.ts";
+import { LootSystem } from "./loot.ts";
 
 const CAMERA_OFFSET = new THREE.Vector3(16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
@@ -41,6 +42,7 @@ export class Game {
   readonly bullets: BulletSystem;
   readonly enemies: EnemyManager;
   readonly particles: ParticleSystem;
+  private loot: LootSystem;
   private readonly hud: Hud;
   private readonly audio = new Audio();
   private readonly followTarget = new THREE.Vector3();
@@ -72,6 +74,7 @@ export class Game {
     this.enemies = new EnemyManager(this.ctx.scene);
     this.bullets = new BulletSystem(this.ctx.scene);
     this.particles = new ParticleSystem(this.ctx.scene);
+    this.loot = new LootSystem(this.world, this.ctx.scene);
     this.hud = new Hud(
       () => this.restart(),
       () => this.restart(),
@@ -122,6 +125,7 @@ export class Game {
     this.currentLevel = 0;
     this.world = new World(0);
     this.ctx.scene.add(this.world.group);
+    this.loot.reset(this.world, this.ctx.scene);
 
     this.player.resetRun();
     this.player.position.copy(this.world.playerSpawn);
@@ -243,6 +247,15 @@ export class Game {
 
     this.bullets.update(dt, this.world, this.enemies, this.particles);
     this.particles.update(dt);
+    this.loot.update(dt, this.player.position);
+
+    // Loot case interaction
+    const nearCase = this.loot.nearest(this.player.position);
+    this.hud.setInteractHint(nearCase !== null && this.player.hp > 0);
+    if (nearCase && this.input.consumeClick() && this.player.hp > 0) {
+      this.openLootCase(nearCase);
+    }
+
     this.hud.update(this.player, this.enemies, this.world);
 
     if (this.player.hp < this.lastHp) {
@@ -308,7 +321,6 @@ export class Game {
     for (const [r, state] of this.roomStates) {
       if (state === "active" && this.enemies.aliveCount() === 0) {
         this.roomStates.set(r, "cleared");
-        this.openUpgradeScreen();
         break;
       }
     }
@@ -335,10 +347,11 @@ export class Game {
   private advanceLevel(nextLevel: number): void {
     this.currentLevel = nextLevel;
 
-    // Swap world geometry
+    // Swap world geometry and loot
     this.ctx.scene.remove(this.world.group);
     this.world = new World(this.currentLevel);
     this.ctx.scene.add(this.world.group);
+    this.loot.reset(this.world, this.ctx.scene);
 
     // Reposition player and refill ammo between levels
     this.player.refillAmmo();
@@ -370,16 +383,23 @@ export class Game {
     this.paused = false;
   }
 
-  private openUpgradeScreen(): void {
-    const cards = rollUpgrades(3);
+  private openLootCase(lootCase: import("./loot.ts").LootCase): void {
     this.paused = true;
-    this.input.firing = false; // mouseup won't fire on canvas while overlay is open
-    this.hud.showUpgrade(cards, (picked: Upgrade) => {
-      picked.apply(this.player);
-      this.upgradeCount++;
+    this.input.firing = false;
+    this.loot.markOpened(lootCase);
+    const close = () => {
       this.hud.hideUpgrade();
       this.paused = false;
-    });
+    };
+    this.hud.showUpgrade(
+      lootCase.contents,
+      (picked: Upgrade) => {
+        picked.apply(this.player);
+        this.upgradeCount++;
+        close();
+      },
+      close,
+    );
   }
 
   private triggerShake(amp: number, duration: number): void {

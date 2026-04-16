@@ -4,6 +4,7 @@ export class Input {
   mouseNdcY = 0;
   firing = false;
   private dashQueued = false;
+  private clickQueued = false;
   private weaponSwitchQueued: number | null = null;
   private reloadQueued = false;
 
@@ -25,6 +26,7 @@ export class Input {
       this.keys.clear();
       this.firing = false;
       this.dashQueued = false;
+      this.clickQueued = false;
       this.weaponSwitchQueued = null;
       this.reloadQueued = false;
     });
@@ -37,7 +39,7 @@ export class Input {
       this.mouseNdcY = -(y * 2 - 1);
     });
     target.addEventListener("mousedown", (e) => {
-      if (e.button === 0) this.firing = true;
+      if (e.button === 0) { this.firing = true; this.clickQueued = true; }
     });
     target.addEventListener("mouseup", (e) => {
       if (e.button === 0) this.firing = false;
@@ -57,6 +59,11 @@ export class Input {
     const v = this.weaponSwitchQueued;
     this.weaponSwitchQueued = null;
     return v;
+  }
+
+  consumeClick(): boolean {
+    if (this.clickQueued) { this.clickQueued = false; return true; }
+    return false;
   }
 
   consumeReload(): boolean {

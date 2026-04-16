@@ -30,6 +30,9 @@ export class Hud {
   private readonly minimapCtx: CanvasRenderingContext2D;
   private readonly upgradeEl: HTMLElement;
   private readonly upgradeCards: HTMLElement;
+  private readonly upgradeClose: HTMLButtonElement;
+  private readonly interactHint: HTMLElement;
+  private upgradeCloseCleanup: (() => void) | null = null;
   private readonly titleEl: HTMLElement;
   private readonly titlePlay: HTMLButtonElement;
   private readonly callsignInput: HTMLInputElement;
@@ -67,6 +70,8 @@ export class Hud {
     this.minimapCtx = ctx;
     this.upgradeEl = required("upgrade");
     this.upgradeCards = required("upgrade-cards");
+    this.upgradeClose = required("upgrade-close") as HTMLButtonElement;
+    this.interactHint = required("interact-hint");
     this.titleEl = required("title");
     this.titlePlay = required("title-play") as HTMLButtonElement;
     this.titlePlay.addEventListener("click", onTitlePlay);
@@ -200,7 +205,7 @@ export class Hud {
     this.winEl.classList.remove("show");
   }
 
-  showUpgrade(cards: Upgrade[], onPick: (card: Upgrade) => void): void {
+  showUpgrade(cards: Upgrade[], onPick: (card: Upgrade) => void, onClose: () => void): void {
     this.upgradeCards.innerHTML = "";
     for (const card of cards) {
       const btn = document.createElement("button");
@@ -212,12 +217,21 @@ export class Hud {
       btn.addEventListener("click", () => onPick(card), { once: true });
       this.upgradeCards.appendChild(btn);
     }
+    if (this.upgradeCloseCleanup) this.upgradeCloseCleanup();
+    const handler = () => onClose();
+    this.upgradeClose.addEventListener("click", handler, { once: true });
+    this.upgradeCloseCleanup = () => this.upgradeClose.removeEventListener("click", handler);
     this.upgradeEl.classList.add("show");
   }
 
   hideUpgrade(): void {
     this.upgradeEl.classList.remove("show");
     this.upgradeCards.innerHTML = "";
+    this.upgradeCloseCleanup = null;
+  }
+
+  setInteractHint(visible: boolean): void {
+    this.interactHint.style.display = visible ? "block" : "none";
   }
 }
 
