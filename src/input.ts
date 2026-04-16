@@ -7,6 +7,7 @@ export class Input {
   private clickQueued = false;
   private weaponSwitchQueued: number | null = null;
   private reloadQueued = false;
+  private interactQueued = false;
 
   constructor(target: HTMLElement) {
     window.addEventListener("keydown", (e) => {
@@ -17,6 +18,7 @@ export class Input {
       if (e.code === "Digit2") this.weaponSwitchQueued = 1;
       if (e.code === "Digit3") this.weaponSwitchQueued = 2;
       if (e.code === "KeyR" && !this.keys.has("KeyR")) this.reloadQueued = true;
+      if (e.code === "KeyE" && !this.keys.has("KeyE")) this.interactQueued = true;
       this.keys.add(e.code);
     });
     window.addEventListener("keyup", (e) => {
@@ -29,6 +31,7 @@ export class Input {
       this.clickQueued = false;
       this.weaponSwitchQueued = null;
       this.reloadQueued = false;
+      this.interactQueued = false;
     });
 
     target.addEventListener("mousemove", (e) => {
@@ -69,6 +72,14 @@ export class Input {
   consumeReload(): boolean {
     if (this.reloadQueued) {
       this.reloadQueued = false;
+      return true;
+    }
+    return false;
+  }
+
+  consumeInteract(): boolean {
+    if (this.interactQueued) {
+      this.interactQueued = false;
       return true;
     }
     return false;

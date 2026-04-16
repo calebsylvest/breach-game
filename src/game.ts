@@ -64,7 +64,6 @@ export class Game {
   private deathShown = false;
   private winShown = false;
   private extractionHit = false;
-  private lootInteractReady = false;
   private paused = false;
   private currentLevel = 0;
   private upgradeCount = 0;
@@ -276,15 +275,12 @@ export class Game {
     this.particles.update(dt);
     this.loot.update(dt, this.player.position);
 
-    // Loot case interaction — require player to already be in range for one frame
-    // before a click registers, preventing fire-clicks from auto-opening cases.
+    // Loot case interaction — E key opens nearest case in range
     const nearCase = this.loot.nearest(this.player.position);
-    const clicked = this.input.consumeClick(); // always consume to avoid queuing
     this.hud.setInteractHint(nearCase !== null && this.player.hp > 0);
-    if (nearCase && this.player.hp > 0 && this.lootInteractReady && clicked) {
+    if (nearCase && this.player.hp > 0 && this.input.consumeInteract()) {
       this.openLootCase(nearCase);
     }
-    this.lootInteractReady = nearCase !== null;
 
     this.hud.update(this.player, this.enemies, this.world);
 
@@ -388,7 +384,7 @@ export class Game {
 
     // Reset per-level flags
     this.extractionHit = false;
-    this.lootInteractReady = false;
+
     this.deathShown = false;
     this.fireCooldown = 0;
     this.shakeTime = 0;
@@ -408,7 +404,7 @@ export class Game {
   private openLootCase(lootCase: import("./loot.ts").LootCase): void {
     this.paused = true;
     this.input.firing = false;
-    this.lootInteractReady = false;
+
     this.hud.setInteractHint(false);
     this.loot.markOpened(lootCase);
     const close = () => {
