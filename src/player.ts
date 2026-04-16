@@ -60,6 +60,17 @@ export class Player {
     this.reloadTimer = 0;
   }
 
+  /** Adds `fraction` of max reserve to each weapon slot. Returns true if any slot was below max. */
+  topUpReserve(fraction: number): boolean {
+    let needed = false;
+    for (let i = 0; i < WEAPONS.length; i++) {
+      if (this.weaponReserve[i] < WEAPONS[i].reserveSize) needed = true;
+      const add = Math.floor(WEAPONS[i].reserveSize * fraction);
+      this.weaponReserve[i] = Math.min(WEAPONS[i].reserveSize, this.weaponReserve[i] + add);
+    }
+    return needed;
+  }
+
   switchWeapon(idx: number): void {
     if (idx === this.weaponIndex) return;
     this.weaponIndex = idx;

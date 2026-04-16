@@ -12,6 +12,7 @@ import type { Upgrade } from "./upgrades.ts";
 import { Audio } from "./audio.ts";
 import { ParticleSystem } from "./particles.ts";
 import { LootSystem } from "./loot.ts";
+import { PickupSystem } from "./pickups.ts";
 
 const CAMERA_OFFSET = new THREE.Vector3(-16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
@@ -53,6 +54,7 @@ export class Game {
   readonly enemies: EnemyManager;
   readonly particles: ParticleSystem;
   private loot: LootSystem;
+  private pickups: PickupSystem;
   private readonly hud: Hud;
   private readonly audio = new Audio();
   private readonly followTarget = new THREE.Vector3();
@@ -85,6 +87,7 @@ export class Game {
     this.bullets = new BulletSystem(this.ctx.scene);
     this.particles = new ParticleSystem(this.ctx.scene);
     this.loot = new LootSystem(this.world, this.ctx.scene);
+    this.pickups = new PickupSystem(this.world, this.ctx.scene);
     this.hud = new Hud(
       () => this.restart(),
       () => this.restart(),
@@ -136,6 +139,7 @@ export class Game {
     this.world = new World(0);
     this.ctx.scene.add(this.world.group);
     this.loot.reset(this.world, this.ctx.scene);
+    this.pickups.reset(this.world, this.ctx.scene);
 
     this.player.resetRun();
     this.player.position.copy(this.world.playerSpawn);
@@ -275,6 +279,15 @@ export class Game {
     this.particles.update(dt);
     this.loot.update(dt, this.player.position);
 
+    // Floor pickups — auto-collect on proximity
+    if (this.player.hp > 0) {
+      const collected = this.pickups.update(dt, this.player);
+      if (collected === "health") this.audio.playerHeal();
+      else if (collected === "ammo") this.audio.ammoPickup();
+    } else {
+      this.pickups.update(dt, this.player);
+    }
+
     // Loot case interaction — E key opens nearest case in range
     const nearCase = this.loot.nearest(this.player.position);
     this.hud.setInteractHint(nearCase !== null && this.player.hp > 0);
@@ -369,6 +382,7 @@ export class Game {
     this.world = new World(this.currentLevel);
     this.ctx.scene.add(this.world.group);
     this.loot.reset(this.world, this.ctx.scene);
+    this.pickups.reset(this.world, this.ctx.scene);
 
     // Reposition player and refill ammo between levels
     this.player.refillAmmo();

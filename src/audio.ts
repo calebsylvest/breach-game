@@ -107,6 +107,42 @@ export class Audio {
     osc.stop(now + 1.2);
   }
 
+  playerHeal(): void {
+    const ctx = this.ensure();
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.14, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.22);
+  }
+
+  ammoPickup(): void {
+    const ctx = this.ensure();
+    const now = ctx.currentTime;
+    // Two quick clicks — metallic rattle feel
+    for (let i = 0; i < 2; i++) {
+      const buf = ctx.createBuffer(1, 512, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * (1 - j / d.length);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const filt = ctx.createBiquadFilter();
+      filt.type = "highpass";
+      filt.frequency.value = 4000;
+      const g = ctx.createGain();
+      g.gain.value = 0.09;
+      src.connect(filt).connect(g).connect(ctx.destination);
+      src.start(now + i * 0.06);
+    }
+  }
+
   deathTone(): void {
     const ctx = this.ensure();
     const now = ctx.currentTime;

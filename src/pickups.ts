@@ -1,0 +1,148 @@
+import * as THREE from "three";
+import type { World } from "./world.ts";
+import type { Player } from "./player.ts";
+
+export type PickupType = "ammo" | "health";
+
+const COLLECT_RADIUS = 1.1;
+const AMMO_RESERVE_RESTORE = 0.5; // fraction of max reserve restored
+const HEALTH_RESTORE = 40;
+
+const PICKUPS_PER_ROOM: Record<string, PickupType[]> = {
+  start:      ["health", "ammo"],
+  corridor:   ["ammo"],
+  arena:      ["health"],
+  nest:       ["ammo"],
+  extraction: [],
+};
+
+interface Pickup {
+  type: PickupType;
+  position: THREE.Vector3;
+  readonly mesh: THREE.Group;
+  collected: boolean;
+  bobPhase: number;
+}
+
+export class PickupSystem {
+  private readonly pickups: Pickup[] = [];
+  private readonly group = new THREE.Group();
+
+  constructor(world: World, parent: THREE.Scene) {
+    parent.add(this.group);
+    this.populate(world);
+  }
+
+  private populate(world: World): void {
+    for (const room of world.rooms) {
+      const types = PICKUPS_PER_ROOM[room.type] ?? [];
+      for (const type of types) {
+        const pt = world.randomPointInRoom(room, 1.8);
+        if (pt) this.spawnPickup(type, pt.x, pt.z);
+      }
+    }
+  }
+
+  private spawnPickup(type: PickupType, x: number, z: number): void {
+    const grp = new THREE.Group();
+
+    if (type === "health") {
+      // Red cross shape — two overlapping boxes
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0xdd2244,
+        emissive: 0xaa1133,
+        emissiveIntensity: 0.8,
+        roughness: 0.4,
+      });
+      const h = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.44, 0.1), mat);
+      const v = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.22, 0.1), mat);
+      h.rotation.x = Math.PI / 2;
+      v.rotation.x = Math.PI / 2;
+      grp.add(h, v);
+
+      const light = new THREE.PointLight(0xff2244, 1.2, 3.5);
+      light.position.y = 0.3;
+      grp.add(light);
+    } else {
+      // Gold ammo box
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0xc8901a,
+        emissive: 0x8a5c00,
+        emissiveIntensity: 0.7,
+        roughness: 0.5,
+        metalness: 0.4,
+      });
+      const box = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.18, 0.22), mat);
+      // Stripe line across the box
+      const stripeMat = new THREE.MeshStandardMaterial({ color: 0x2a1a00, roughness: 0.9 });
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.04, 0.24), stripeMat);
+      stripe.position.y = 0.01;
+      grp.add(box, stripe);
+
+      const light = new THREE.PointLight(0xffaa22, 1.0, 3.0);
+      light.position.y = 0.3;
+      grp.add(light);
+    }
+
+    grp.position.set(x, 0.35, z);
+    this.group.add(grp);
+
+    this.pickups.push({
+      type,
+      position: new THREE.Vector3(x, 0, z),
+      mesh: grp,
+      collected: false,
+      bobPhase: Math.random() * Math.PI * 2,
+    });
+  }
+
+  update(dt: number, player: Player): string | null {
+    let collected: string | null = null;
+
+    for (const p of this.pickups) {
+      if (p.collected) continue;
+
+      // Bob animation
+      p.bobPhase += dt * 2.2;
+      p.mesh.position.y = 0.35 + Math.sin(p.bobPhase) * 0.06;
+      p.mesh.rotation.y += dt * 1.4;
+
+      // Proximity collect
+      const dx = player.position.x - p.position.x;
+      const dz = player.position.z - p.position.z;
+      if (dx * dx + dz * dz < COLLECT_RADIUS * COLLECT_RADIUS) {
+        const result = this.collect(p, player);
+        if (result) collected = result;
+      }
+    }
+
+    return collected;
+  }
+
+  private collect(p: Pickup, player: Player): string | null {
+    if (p.type === "health") {
+      if (player.hp >= player.maxHp) return null;
+      player.hp = Math.min(player.maxHp, player.hp + HEALTH_RESTORE);
+      p.collected = true;
+      p.mesh.visible = false;
+      return "health";
+    } else {
+      if (!player.topUpReserve(AMMO_RESERVE_RESTORE)) return null;
+      p.collected = true;
+      p.mesh.visible = false;
+      return "ammo";
+    }
+  }
+
+  reset(world: World, parent: THREE.Scene): void {
+    parent.remove(this.group);
+    this.pickups.length = 0;
+    this.group.clear();
+    parent.add(this.group);
+    this.populate(world);
+  }
+
+  dispose(parent: THREE.Scene): void {
+    parent.remove(this.group);
+  }
+}
