@@ -17,19 +17,29 @@ const CAMERA_OFFSET = new THREE.Vector3(-16, 20, 16);
 const LIGHT_OFFSET = new THREE.Vector3(8, 24, 4);
 
 const ARENA_WAVES: EnemyType[][] = [
-  ["scuttler", "scuttler", "scuttler", "scuttler", "scuttler"],
-  ["scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute"],
+  // Level 1 — learn the chase
+  ["scuttler", "scuttler", "scuttler", "scuttler", "scuttler", "scuttler", "scuttler", "spitter"],
+  // Level 2 — brute pressure
   ["scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute"],
-  ["scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute", "brute", "lurker"],
+  // Level 3 — lurkers added
+  ["scuttler", "scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "brute", "lurker"],
+  // Level 4 — double brute gauntlet
   ["scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "spitter", "brute", "brute", "lurker", "lurker"],
+  // Level 5 — max pressure
+  ["scuttler", "scuttler", "scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "spitter", "brute", "brute", "brute", "lurker", "lurker"],
 ];
 
 const NEST_WAVES: EnemyType[][] = [
+  // Level 1 — no nest (shouldn't be reached at level 1 but guard value)
   [],
-  ["nest", "scuttler", "scuttler"],
-  ["nest", "scuttler", "scuttler", "lurker", "lurker"],
-  ["nest", "nest", "scuttler", "scuttler", "scuttler", "lurker", "lurker"],
-  ["nest", "nest", "scuttler", "scuttler", "spitter", "lurker", "lurker", "lurker"],
+  // Level 2 — single nest + guards
+  ["nest", "scuttler", "scuttler", "scuttler", "lurker"],
+  // Level 3
+  ["nest", "scuttler", "scuttler", "scuttler", "spitter", "lurker", "lurker"],
+  // Level 4 — double nest
+  ["nest", "nest", "scuttler", "scuttler", "scuttler", "scuttler", "spitter", "lurker", "lurker"],
+  // Level 5
+  ["nest", "nest", "scuttler", "scuttler", "scuttler", "scuttler", "spitter", "spitter", "lurker", "lurker", "lurker"],
 ];
 
 type RoomState = "untouched" | "active" | "cleared";

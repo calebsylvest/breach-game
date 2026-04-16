@@ -27,26 +27,26 @@ interface TypeDef {
 
 const TYPES: Record<EnemyType, TypeDef> = {
   scuttler: {
-    maxHp: 30,
-    speed: 4.5,
+    maxHp: 50,
+    speed: 4.8,
     radius: 0.38,
-    contactDamage: 10,
-    contactCooldown: 0.7,
+    contactDamage: 12,
+    contactCooldown: 0.65,
     behavior: "chase",
     aggroRange: 8,
   },
   brute: {
-    maxHp: 250,
-    speed: 2.0,
+    maxHp: 350,
+    speed: 2.4,
     radius: 0.75,
-    contactDamage: 40,
-    contactCooldown: 1.2,
+    contactDamage: 45,
+    contactCooldown: 1.1,
     behavior: "chase",
     aggroRange: 11,
   },
   spitter: {
-    maxHp: 80,
-    speed: 3.0,
+    maxHp: 120,
+    speed: 3.2,
     radius: 0.42,
     contactDamage: 0,
     contactCooldown: 0,
@@ -55,21 +55,21 @@ const TYPES: Record<EnemyType, TypeDef> = {
     preferredDistance: 9,
     retreatDistance: 5,
     attackRange: 16,
-    attackCooldown: 1.8,
-    attackDamage: 25,
+    attackCooldown: 1.4,
+    attackDamage: 28,
   },
   lurker: {
-    maxHp: 100,
-    speed: 3.8,
+    maxHp: 150,
+    speed: 4.2,
     radius: 0.42,
-    contactDamage: 50,
-    contactCooldown: 2.0,
+    contactDamage: 60,
+    contactCooldown: 1.8,
     behavior: "ambush",
     aggroRange: 5,
     ambushRevealRange: 5,
   },
   nest: {
-    maxHp: 400,
+    maxHp: 550,
     speed: 0,
     radius: 0.9,
     contactDamage: 0,
@@ -77,7 +77,7 @@ const TYPES: Record<EnemyType, TypeDef> = {
     behavior: "stationary",
     aggroRange: 0,
     spawnType: "scuttler",
-    spawnInterval: 4,
+    spawnInterval: 3,
   },
 };
 
@@ -103,7 +103,7 @@ const SPAWN_BURST_MIN = 2;
 const SPAWN_BURST_MAX = 4;
 const MIN_SPAWN_DIST = 9;
 const MAX_SPAWN_DIST = 16;
-const MAX_ALIVE = 24;
+const MAX_ALIVE = 36;
 const LURKER_OPACITY_HIDDEN = 0.12;
 
 export class EnemyManager {
