@@ -94,6 +94,15 @@ export const UPGRADES: Upgrade[] = [
       p.stats.speedMult *= 1.3;
     },
   },
+  {
+    id: "resupply",
+    name: "resupply",
+    description: "refill all weapon ammo to full",
+    category: "utility",
+    apply: (p) => {
+      p.refillAmmo();
+    },
+  },
 ];
 
 export function rollUpgrades(n: number): Upgrade[] {

@@ -326,7 +326,8 @@ export class Game {
     this.world = new World(this.currentLevel);
     this.ctx.scene.add(this.world.group);
 
-    // Reposition player
+    // Reposition player and refill ammo between levels
+    this.player.refillAmmo();
     this.player.position.copy(this.world.playerSpawn);
     this.player.group.position.set(this.player.position.x, 0, this.player.position.z);
     this.player.group.rotation.z = 0;

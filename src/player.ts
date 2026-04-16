@@ -50,6 +50,15 @@ export class Player {
     return WEAPONS[this.weaponIndex].name;
   }
 
+  refillAmmo(): void {
+    for (let i = 0; i < WEAPONS.length; i++) {
+      this.weaponMag[i] = WEAPONS[i].magSize;
+      this.weaponReserve[i] = WEAPONS[i].reserveSize;
+    }
+    this.reloading = false;
+    this.reloadTimer = 0;
+  }
+
   switchWeapon(idx: number): void {
     if (idx === this.weaponIndex) return;
     this.weaponIndex = idx;
