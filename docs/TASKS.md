@@ -6,8 +6,8 @@ Living task list tracking build progress against `BREACH_PRD.md`. Update as work
 
 - **Branch:** main
 - **Playable:** yes — title → run → arena wave → upgrade → nest wave → upgrade → extraction → win
-- **Last phase shipped:** Weapons + Level Progression
-- **Next suggested phase:** run stats on win/death screens, then balance pass
+- **Last phase shipped:** Enemy aggro stagger + bigger rooms + physical gear upgrades + balance tuning
+- **Next suggested phase:** ammo/health floor pickups, non-linear room branching (stretch), or deploy
 
 ## Done
 
@@ -37,7 +37,10 @@ Living task list tracking build progress against `BREACH_PRD.md`. Update as work
 - [x] Room clear detection
 - [x] Upgrade screen: pause + 3 random cards + click-to-apply
 - [x] Stats struct feeding damage/fireRate/speed/maxHp
-- [x] Upgrade pool: 9 offense / defense / utility cards
+- [x] Upgrade pool: 15 physical gear items (Hollow Points, AP Rounds, Kevlar Vest, Dash Canister, Exo-Legs, etc.)
+- [x] Loot cases: pre-placed in arenas/nests, click-to-open modal replaces room-clear reward
+- [x] Enemy pre-spawn + per-type aggro ranges; alarm propagation on damage
+- [x] Callsign prompt on title screen
 
 ### HUD & Screens
 - [x] HP bar + kill count
@@ -56,7 +59,7 @@ Living task list tracking build progress against `BREACH_PRD.md`. Update as work
 
 ## In Progress
 
-_None — paused for review._
+_None._
 
 ## Remaining (by PRD section)
 
@@ -95,7 +98,7 @@ _None — paused for review._
 
 ### Audio (`## Audio`)
 - [x] Gunshot / hit / death / win / death tone
-- [ ] Distinct gunshot per weapon type
+- [x] Distinct gunshot per weapon type
 - [ ] Low-frequency ambient hum
 - [ ] Footstep ticks
 
@@ -104,8 +107,8 @@ _None — paused for review._
 - [x] Upgrade screen
 - [x] Win screen
 - [x] Death screen
-- [ ] Username prompt on title (defaults to "Soldier")
-- [ ] Run stats on win/death: rooms cleared, upgrades taken
+- [x] Username prompt on title (defaults to "Soldier")
+- [x] Run stats on win/death: kills, time, level, upgrades taken
 
 ### Balance & Polish (`## Build Timeline — Apr 25-26`)
 - [ ] Full playtest pass
@@ -125,3 +128,20 @@ _None — paused for review._
   - [ ] `?portal=true` entry detection
 - [ ] Multiplayer co-op (`## Multiplayer`)
   - [ ] Only after everything else above is stable
+
+## TO SORT → DONE
+
+All items below have been resolved:
+
+- [x] **Game too easy** — Enemy HP buffed 40-60%, speed/attack rate increased; wave density up ~50%; MAX_ALIVE 24→36
+- [x] **Camera direction SE→NE** — CAMERA_OFFSET flipped to (-16,20,16); level progression now reads left-to-right
+- [x] **Bigger rooms + more cover** — Arenas 30-50% larger; added corner pillars, mid-wall segments, center flanking boxes; nests get organic cluster ring
+- [x] **Physical gear upgrades** — 15 named items (Hollow Points, AP Rounds, Kevlar Vest, Medkit, Exo-Legs, Dash Canister, etc.) replace abstract stat boosts
+- [x] **Room-clear upgrade screen removed** — Upgrades now found in loot cases scattered in rooms (click to open)
+- [x] **Enemy visibility + aggro stagger** — Enemies pre-spawn at level load with `aggroed=false`; each type has an aggro range (scuttler 8u, brute 11u, spitter 15u, lurker 5u); alarm propagates on hit
+
+### Still open from TO SORT
+- [ ] **Non-linear room paths** — Current layout is still linear chain. Would need World generator to support branching (separate room graph task, large scope)
+- [ ] **Armor as HP substitute** — User wants armor stat instead of maxHp bonus (separate Stats refactor)
+- [ ] **Ammo/health packs as world pickups** — Could add floor-dropped items alongside loot cases
+  
