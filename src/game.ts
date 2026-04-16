@@ -54,6 +54,7 @@ export class Game {
   private extractionHit = false;
   private paused = false;
   private currentLevel = 0;
+  private upgradeCount = 0;
   private runStart = performance.now();
   private lastHp = 0;
   private lastKillCount = 0;
@@ -132,6 +133,7 @@ export class Game {
       e.group.visible = false;
     }
     this.enemies.killCount = 0;
+    this.upgradeCount = 0;
     this.deathShown = false;
     this.winShown = false;
     this.extractionHit = false;
@@ -257,7 +259,14 @@ export class Game {
     }
 
     if (this.player.hp <= 0 && !this.deathShown) {
-      this.hud.showDeath(this.player.lastDamageSource);
+      const elapsed = (performance.now() - this.runStart) / 1000;
+      this.hud.showDeath(
+        this.player.lastDamageSource,
+        this.enemies.killCount,
+        elapsed,
+        this.currentLevel + 1,
+        this.upgradeCount,
+      );
       this.audio.deathTone();
       this.deathShown = true;
     }
@@ -266,7 +275,12 @@ export class Game {
       this.extractionHit = true;
       if (this.currentLevel >= LEVEL_NAMES.length - 1) {
         const elapsed = (performance.now() - this.runStart) / 1000;
-        this.hud.showWin(this.enemies.killCount, elapsed);
+        this.hud.showWin(
+          this.enemies.killCount,
+          elapsed,
+          this.currentLevel + 1,
+          this.upgradeCount,
+        );
         this.audio.winTone();
         this.winShown = true;
       } else {
@@ -362,6 +376,7 @@ export class Game {
     this.input.firing = false; // mouseup won't fire on canvas while overlay is open
     this.hud.showUpgrade(cards, (picked: Upgrade) => {
       picked.apply(this.player);
+      this.upgradeCount++;
       this.hud.hideUpgrade();
       this.paused = false;
     });

@@ -21,6 +21,7 @@ export class Hud {
   private readonly weaponEl: HTMLElement;
   private readonly deathEl: HTMLElement;
   private readonly deathSub: HTMLElement;
+  private readonly deathStats: HTMLElement;
   private readonly deathRestart: HTMLButtonElement;
   private readonly winEl: HTMLElement;
   private readonly winStats: HTMLElement;
@@ -51,6 +52,7 @@ export class Hud {
     this.weaponEl = required("weapon-name");
     this.deathEl = required("death");
     this.deathSub = required("death-sub");
+    this.deathStats = required("death-stats");
     this.deathRestart = required("death-restart") as HTMLButtonElement;
     this.deathRestart.addEventListener("click", onDeathRestart);
     this.winEl = required("win");
@@ -164,8 +166,11 @@ export class Hud {
     ctx.stroke();
   }
 
-  showDeath(cause: string): void {
+  showDeath(cause: string, kills: number, elapsedSec: number, level: number, upgrades: number): void {
+    const m = Math.floor(elapsedSec / 60);
+    const s = Math.floor(elapsedSec % 60);
     this.deathSub.textContent = `killed by ${cause}`;
+    this.deathStats.textContent = `kills ${kills} · time ${m}:${s.toString().padStart(2, "0")} · level ${level} · upgrades ${upgrades}`;
     this.deathEl.classList.add("show");
   }
 
@@ -173,11 +178,11 @@ export class Hud {
     this.deathEl.classList.remove("show");
   }
 
-  showWin(kills: number, elapsedSec: number): void {
+  showWin(kills: number, elapsedSec: number, level: number, upgrades: number): void {
     const m = Math.floor(elapsedSec / 60);
     const s = Math.floor(elapsedSec % 60);
     const t = `${m}:${s.toString().padStart(2, "0")}`;
-    this.winStats.textContent = `kills ${kills} · time ${t}`;
+    this.winStats.textContent = `kills ${kills} · time ${t} · levels ${level} · upgrades ${upgrades}`;
     this.winEl.classList.add("show");
   }
 
