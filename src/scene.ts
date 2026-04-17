@@ -7,8 +7,7 @@ export interface SceneCtx {
   container: HTMLElement;
   keyLight: THREE.DirectionalLight;
   playerLight: THREE.PointLight;
-  flashLight: THREE.SpotLight;
-  flashTarget: THREE.Object3D;
+  aimLight: THREE.PointLight;
 }
 
 const FRUSTUM = 22;
@@ -60,18 +59,14 @@ export function createScene(container: HTMLElement): SceneCtx {
   scene.add(rim);
 
   // Player-carried point light — fills in close surroundings
-  const playerLight = new THREE.PointLight(0xffe8c0, 5.0, 20, 2);
-  playerLight.position.set(0, 3, 0);
+  const playerLight = new THREE.PointLight(0xffe8c0, 4.0, 16, 2);
+  playerLight.position.set(0, 2, 0);
   scene.add(playerLight);
 
-  // Directional flashlight in aim direction — primary long-range visibility
-  const flashTarget = new THREE.Object3D();
-  scene.add(flashTarget);
-  const flashLight = new THREE.SpotLight(0xf0f4ff, 4.5, 22, 0.38, 0.5, 2);
-  flashLight.position.set(0, 3, 0);
-  flashLight.target = flashTarget;
-  flashLight.castShadow = false;
-  scene.add(flashLight);
+  // Aim-direction light — pool of light on the floor 5u ahead of player
+  const aimLight = new THREE.PointLight(0xf0e8d0, 5.5, 14, 2);
+  aimLight.position.set(0, 1, 0);
+  scene.add(aimLight);
 
   window.addEventListener("resize", () => {
     const w = container.clientWidth;
@@ -85,5 +80,5 @@ export function createScene(container: HTMLElement): SceneCtx {
     renderer.setSize(w, h);
   });
 
-  return { renderer, scene, camera, container, keyLight: key, playerLight, flashLight, flashTarget };
+  return { renderer, scene, camera, container, keyLight: key, playerLight, aimLight };
 }

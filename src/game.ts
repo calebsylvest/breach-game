@@ -487,15 +487,13 @@ export class Game {
 
     const px = this.player.position.x;
     const pz = this.player.position.z;
-    this.ctx.playerLight.position.set(px, 3, pz);
+    this.ctx.playerLight.position.set(px, 2, pz);
 
-    // Flashlight: positioned at player, aimed along aim vector
-    this.ctx.flashLight.position.set(px, 3, pz);
-    this.ctx.flashTarget.position.set(
-      px + this.player.aim.x * 20,
-      0,
-      pz + this.player.aim.z * 20,
+    // Aim light: pool of light on the floor 5 units ahead in aim direction
+    this.ctx.aimLight.position.set(
+      px + this.player.aim.x * 5,
+      1,
+      pz + this.player.aim.z * 5,
     );
-    this.ctx.flashTarget.updateMatrixWorld();
   }
 }
