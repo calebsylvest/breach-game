@@ -229,17 +229,17 @@ export class World {
     });
   }
 
-  private addWallBox(x: number, z: number, sx: number, sz: number, ghost = false): void {
+  private addWallBox(x: number, z: number, sx: number, sz: number, low = false): void {
     if (sx <= 0 || sz <= 0) return;
-    const geo = new THREE.BoxGeometry(sx, WALL_HEIGHT, sz);
-    const mat = ghost
-      ? new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85, transparent: true, opacity: 0, depthWrite: false })
-      : new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85 });
+    const h = low ? 0.4 : WALL_HEIGHT;
+    const geo = new THREE.BoxGeometry(sx, h, sz);
+    const mat = new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85 });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, WALL_HEIGHT / 2, z);
-    if (!ghost) { mesh.castShadow = true; mesh.receiveShadow = true; }
+    mesh.position.set(x, h / 2, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     this.group.add(mesh);
-    this.addCollider(x, z, sx, sz); // collision always kept
+    this.addCollider(x, z, sx, sz); // collision always full-size
   }
 
   private addCoverBox(x: number, z: number, sx: number, sz: number, h = 1.2): void {
@@ -293,19 +293,19 @@ export class World {
     minZ: number,
     maxZ: number,
     opening: Opening | null,
-    ghost = false,
+    low = false,
   ): void {
     if (!opening || opening.max <= opening.min) {
-      this.addWallBox(x, (minZ + maxZ) / 2, WALL_THICKNESS, maxZ - minZ, ghost);
+      this.addWallBox(x, (minZ + maxZ) / 2, WALL_THICKNESS, maxZ - minZ, low);
       return;
     }
     if (opening.min > minZ) {
       const len = opening.min - minZ;
-      this.addWallBox(x, (minZ + opening.min) / 2, WALL_THICKNESS, len, ghost);
+      this.addWallBox(x, (minZ + opening.min) / 2, WALL_THICKNESS, len, low);
     }
     if (opening.max < maxZ) {
       const len = maxZ - opening.max;
-      this.addWallBox(x, (opening.max + maxZ) / 2, WALL_THICKNESS, len, ghost);
+      this.addWallBox(x, (opening.max + maxZ) / 2, WALL_THICKNESS, len, low);
     }
   }
 
@@ -314,17 +314,17 @@ export class World {
     minX: number,
     maxX: number,
     opening: Opening | null,
-    ghost = false,
+    low = false,
   ): void {
     if (!opening || opening.max <= opening.min) {
-      this.addWallBox((minX + maxX) / 2, z, maxX - minX, WALL_THICKNESS, ghost);
+      this.addWallBox((minX + maxX) / 2, z, maxX - minX, WALL_THICKNESS, low);
       return;
     }
     if (opening.min > minX) {
-      this.addWallBox((minX + opening.min) / 2, z, opening.min - minX, WALL_THICKNESS, ghost);
+      this.addWallBox((minX + opening.min) / 2, z, opening.min - minX, WALL_THICKNESS, low);
     }
     if (opening.max < maxX) {
-      this.addWallBox((opening.max + maxX) / 2, z, maxX - opening.max, WALL_THICKNESS, ghost);
+      this.addWallBox((opening.max + maxX) / 2, z, maxX - opening.max, WALL_THICKNESS, low);
     }
   }
 
