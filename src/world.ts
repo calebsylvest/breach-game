@@ -118,6 +118,7 @@ export class World {
     this.buildFloor();
     this.buildWalls();
     this.buildCover();
+    this.buildExteriorFill();
     this.extractionBeacon = this.buildExtractionPad();
   }
 
@@ -229,17 +230,16 @@ export class World {
     });
   }
 
-  private addWallBox(x: number, z: number, sx: number, sz: number, low = false): void {
+  private addWallBox(x: number, z: number, sx: number, sz: number): void {
     if (sx <= 0 || sz <= 0) return;
-    const h = low ? 0.4 : WALL_HEIGHT;
-    const geo = new THREE.BoxGeometry(sx, h, sz);
+    const geo = new THREE.BoxGeometry(sx, WALL_HEIGHT, sz);
     const mat = new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85 });
     const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, h / 2, z);
+    mesh.position.set(x, WALL_HEIGHT / 2, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     this.group.add(mesh);
-    this.addCollider(x, z, sx, sz); // collision always full-size
+    this.addCollider(x, z, sx, sz);
   }
 
   private addCoverBox(x: number, z: number, sx: number, sz: number, h = 1.2): void {
@@ -281,10 +281,10 @@ export class World {
       const westOpening = west ? overlap(room.minZ, room.maxZ, west.minZ, west.maxZ) : null;
       const eastOpening = east ? overlap(room.minZ, room.maxZ, east.minZ, east.maxZ) : null;
 
-      this.buildVerticalWall(room.minX, room.minZ, room.maxZ, westOpening, true);  // west — faces camera
-      this.buildVerticalWall(room.maxX, room.minZ, room.maxZ, eastOpening, false);
-      this.buildHorizontalWall(room.maxZ, room.minX, room.maxX, null, true);        // south — faces camera
-      this.buildHorizontalWall(room.minZ, room.minX, room.maxX, null, false);
+      this.buildVerticalWall(room.minX, room.minZ, room.maxZ, westOpening);
+      this.buildVerticalWall(room.maxX, room.minZ, room.maxZ, eastOpening);
+      this.buildHorizontalWall(room.maxZ, room.minX, room.maxX, null);
+      this.buildHorizontalWall(room.minZ, room.minX, room.maxX, null);
     }
   }
 
@@ -293,19 +293,18 @@ export class World {
     minZ: number,
     maxZ: number,
     opening: Opening | null,
-    low = false,
   ): void {
     if (!opening || opening.max <= opening.min) {
-      this.addWallBox(x, (minZ + maxZ) / 2, WALL_THICKNESS, maxZ - minZ, low);
+      this.addWallBox(x, (minZ + maxZ) / 2, WALL_THICKNESS, maxZ - minZ);
       return;
     }
     if (opening.min > minZ) {
       const len = opening.min - minZ;
-      this.addWallBox(x, (minZ + opening.min) / 2, WALL_THICKNESS, len, low);
+      this.addWallBox(x, (minZ + opening.min) / 2, WALL_THICKNESS, len);
     }
     if (opening.max < maxZ) {
       const len = maxZ - opening.max;
-      this.addWallBox(x, (opening.max + maxZ) / 2, WALL_THICKNESS, len, low);
+      this.addWallBox(x, (opening.max + maxZ) / 2, WALL_THICKNESS, len);
     }
   }
 
@@ -314,17 +313,39 @@ export class World {
     minX: number,
     maxX: number,
     opening: Opening | null,
-    low = false,
   ): void {
     if (!opening || opening.max <= opening.min) {
-      this.addWallBox((minX + maxX) / 2, z, maxX - minX, WALL_THICKNESS, low);
+      this.addWallBox((minX + maxX) / 2, z, maxX - minX, WALL_THICKNESS);
       return;
     }
     if (opening.min > minX) {
-      this.addWallBox((minX + opening.min) / 2, z, opening.min - minX, WALL_THICKNESS, low);
+      this.addWallBox((minX + opening.min) / 2, z, opening.min - minX, WALL_THICKNESS);
     }
     if (opening.max < maxX) {
-      this.addWallBox((opening.max + maxX) / 2, z, maxX - opening.max, WALL_THICKNESS, low);
+      this.addWallBox((opening.max + maxX) / 2, z, maxX - opening.max, WALL_THICKNESS);
+    }
+  }
+
+  private buildExteriorFill(): void {
+    const { minX, maxX, minZ, maxZ } = this.bounds;
+    const pad = 14;
+    const fillH = 5.5;
+    const mat = new THREE.MeshStandardMaterial({ color: 0x0c1018, roughness: 1.0 });
+
+    const addFill = (x1: number, x2: number, z1: number, z2: number) => {
+      const sx = x2 - x1;
+      const sz = z2 - z1;
+      if (sx <= 0 || sz <= 0) return;
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, fillH, sz), mat);
+      mesh.position.set((x1 + x2) / 2, fillH / 2, (z1 + z2) / 2);
+      this.group.add(mesh);
+    };
+
+    addFill(minX - pad, minX, minZ - pad, maxZ + pad);
+    addFill(maxX, maxX + pad, minZ - pad, maxZ + pad);
+    for (const room of this.rooms) {
+      addFill(room.minX, room.maxX, minZ - pad, room.minZ);
+      addFill(room.minX, room.maxX, room.maxZ, maxZ + pad);
     }
   }
 
