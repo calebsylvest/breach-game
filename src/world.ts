@@ -118,6 +118,7 @@ export class World {
     this.buildFloor();
     this.buildWalls();
     this.buildCover();
+    this.buildExteriorFill();
     this.extractionBeacon = this.buildExtractionPad();
   }
 
@@ -252,7 +253,7 @@ export class World {
 
   private buildFloor(): void {
     const { minX, maxX, minZ, maxZ } = this.bounds;
-    const pad = 4;
+    const pad = 14;
     const w = maxX - minX + pad * 2;
     const d = maxZ - minZ + pad * 2;
     const geo = new THREE.PlaneGeometry(w, d);
@@ -268,6 +269,32 @@ export class World {
     const grid = new THREE.GridHelper(gridSize, divisions, 0x2a3446, 0x1a2332);
     grid.position.set((minX + maxX) / 2, 0.01, (minZ + maxZ) / 2);
     this.group.add(grid);
+  }
+
+  private buildExteriorFill(): void {
+    const { minX, maxX, minZ, maxZ } = this.bounds;
+    const pad = 14;
+    const fillH = 5.5;
+    const mat = new THREE.MeshStandardMaterial({ color: 0x0c1018, roughness: 1.0 });
+
+    const addFill = (x1: number, x2: number, z1: number, z2: number) => {
+      const sx = x2 - x1;
+      const sz = z2 - z1;
+      if (sx <= 0 || sz <= 0) return;
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, fillH, sz), mat);
+      mesh.position.set((x1 + x2) / 2, fillH / 2, (z1 + z2) / 2);
+      this.group.add(mesh);
+    };
+
+    // West and east caps — extend beyond entire level including pad
+    addFill(minX - pad, minX, minZ - pad, maxZ + pad);
+    addFill(maxX, maxX + pad, minZ - pad, maxZ + pad);
+
+    // Per-room north and south fill — covers gaps between rooms of different depths
+    for (const room of this.rooms) {
+      addFill(room.minX, room.maxX, minZ - pad, room.minZ);
+      addFill(room.minX, room.maxX, room.maxZ, maxZ + pad);
+    }
   }
 
   private buildWalls(): void {
