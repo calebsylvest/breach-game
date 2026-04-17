@@ -14,6 +14,8 @@ const ROOM_COLORS: Record<RoomType, string> = {
 export class Hud {
   private readonly hpEl: HTMLElement;
   private readonly hpFill: HTMLElement;
+  private readonly armorEl: HTMLElement;
+  private readonly armorFill: HTMLElement;
   private readonly dashFill: HTMLElement;
   private readonly killsEl: HTMLElement;
   private readonly roomEl: HTMLElement;
@@ -52,6 +54,8 @@ export class Hud {
   ) {
     this.hpEl = required("hp");
     this.hpFill = required("hp-fill");
+    this.armorEl = required("armor");
+    this.armorFill = required("armor-fill");
     this.dashFill = required("dash-fill");
     this.killsEl = required("kills");
     this.roomEl = required("room-label");
@@ -116,6 +120,9 @@ export class Hud {
     this.hpEl.textContent = `HP ${Math.max(0, Math.round(player.hp))} / ${player.maxHp}`;
     const pct = Math.max(0, player.hp / player.maxHp) * 100;
     this.hpFill.style.width = `${pct}%`;
+    this.armorEl.textContent = `ARMOR ${Math.max(0, Math.round(player.armor))} / ${player.maxArmor}`;
+    const armorPct = Math.max(0, player.armor / player.maxArmor) * 100;
+    this.armorFill.style.width = `${armorPct}%`;
     const dashPct = player.dashCooldown <= 0
       ? 100
       : (1 - player.dashCooldown / player.dashCooldownMax) * 100;

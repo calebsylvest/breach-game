@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { World } from "./world.ts";
-import { rollUpgrades, type Upgrade } from "./upgrades.ts";
+import type { Upgrade } from "./upgrades.ts";
 
 export const INTERACT_RANGE = 2.2;
 const CASES_PER_ARENA = 2;
@@ -10,7 +10,7 @@ const CASES_PER_CORRIDOR = 0;
 export interface LootCase {
   readonly group: THREE.Group;
   readonly position: THREE.Vector3;
-  readonly contents: Upgrade[];
+  contents: Upgrade[];
   opened: boolean;
   readonly baseMat: THREE.MeshStandardMaterial;
 }
@@ -67,7 +67,7 @@ export class LootSystem {
     this.cases.push({
       group: grp,
       position: new THREE.Vector3(x, 0, z),
-      contents: rollUpgrades(3),
+      contents: [],
       opened: false,
       baseMat,
     });

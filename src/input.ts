@@ -18,6 +18,7 @@ export class Input {
       if (e.code === "Digit1") this.weaponSwitchQueued = 0;
       if (e.code === "Digit2") this.weaponSwitchQueued = 1;
       if (e.code === "Digit3") this.weaponSwitchQueued = 2;
+      if (e.code === "Digit4") this.weaponSwitchQueued = 3;
       if (e.code === "KeyR" && !this.keys.has("KeyR")) this.reloadQueued = true;
       if (e.code === "KeyE" && !this.keys.has("KeyE")) this.interactQueued = true;
       if ((e.code === "Escape" || e.code === "KeyP") && !this.keys.has(e.code)) this.pauseQueued = true;

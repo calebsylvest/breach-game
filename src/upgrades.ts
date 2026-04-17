@@ -7,6 +7,7 @@ export interface Upgrade {
   name: string;
   description: string;
   category: UpgradeCategory;
+  maxStacks?: number;
   apply: (player: Player) => void;
 }
 
@@ -17,6 +18,7 @@ export const UPGRADES: Upgrade[] = [
     name: "Hollow Points",
     category: "offense",
     description: "Expanding ammo. Rounds hit 20% harder on soft targets.",
+    maxStacks: 2,
     apply: (p) => { p.stats.damageMult *= 1.2; },
   },
   {
@@ -24,6 +26,7 @@ export const UPGRADES: Upgrade[] = [
     name: "AP Rounds",
     category: "offense",
     description: "Armor-piercing penetrators. +35% damage through plating.",
+    maxStacks: 2,
     apply: (p) => { p.stats.damageMult *= 1.35; },
   },
   {
@@ -31,6 +34,7 @@ export const UPGRADES: Upgrade[] = [
     name: "Trigger Job",
     category: "offense",
     description: "Lightened spring, polished sear. 20% faster cyclic rate.",
+    maxStacks: 2,
     apply: (p) => { p.stats.fireRateMult *= 1.2; },
   },
   {
@@ -38,6 +42,7 @@ export const UPGRADES: Upgrade[] = [
     name: "Enhanced BCG",
     category: "offense",
     description: "Optimized bolt carrier group. 35% faster fire rate.",
+    maxStacks: 2,
     apply: (p) => { p.stats.fireRateMult *= 1.35; },
   },
   {
@@ -45,30 +50,52 @@ export const UPGRADES: Upgrade[] = [
     name: "Frag Rounds",
     category: "offense",
     description: "Fragmenting projectiles. +25% damage, nasty wound channels.",
+    maxStacks: 2,
     apply: (p) => { p.stats.damageMult *= 1.25; },
   },
 
-  // ── Defense ───────────────────────────────────────────────────────────────
+  // ── Defense — Armor ───────────────────────────────────────────────────────
   {
-    id: "trauma_plate",
-    name: "Trauma Plate",
+    id: "armor_plate_1",
+    name: "Armor Plate I",
     category: "defense",
-    description: "Ceramic insert rated for rifle rounds. +25 max HP.",
+    description: "Standard-issue ceramic plate. +25 max armor, restore 25.",
+    maxStacks: 2,
     apply: (p) => {
-      p.stats.maxHpBonus += 25;
-      p.hp = Math.min(p.maxHp, p.hp + 25);
+      p.stats.maxArmorBonus += 25;
+      p.repairArmor(25);
     },
   },
   {
-    id: "kevlar_vest",
-    name: "Kevlar Vest",
+    id: "armor_plate_2",
+    name: "Armor Plate II",
     category: "defense",
-    description: "Full torso ballistic vest. +50 max HP.",
+    description: "Reinforced composite panel. +40 max armor, restore 40.",
+    maxStacks: 2,
     apply: (p) => {
-      p.stats.maxHpBonus += 50;
-      p.hp = Math.min(p.maxHp, p.hp + 50);
+      p.stats.maxArmorBonus += 40;
+      p.repairArmor(40);
     },
   },
+  {
+    id: "armor_plate_3",
+    name: "Armor Plate III",
+    category: "defense",
+    description: "Ballistic-rated hard plate. +60 max armor, restore to full.",
+    maxStacks: 1,
+    apply: (p) => {
+      p.stats.maxArmorBonus += 60;
+      p.armor = p.maxArmor;
+    },
+  },
+  {
+    id: "armor_repair",
+    name: "Armor Repair Kit",
+    category: "defense",
+    description: "Field patch compound. Restore 35 armor.",
+    apply: (p) => { p.repairArmor(35); },
+  },
+  // ── Defense — Health (rare) ────────────────────────────────────────────────
   {
     id: "medkit",
     name: "Medkit",
@@ -97,6 +124,7 @@ export const UPGRADES: Upgrade[] = [
     name: "Exo-Legs",
     category: "utility",
     description: "Powered leg braces, near-silent servos. +20% move speed.",
+    maxStacks: 3,
     apply: (p) => { p.stats.speedMult *= 1.2; },
   },
   {
@@ -104,6 +132,7 @@ export const UPGRADES: Upgrade[] = [
     name: "Sprint Actuators",
     category: "utility",
     description: "Military-grade exo-frame, full stride assist. +30% speed.",
+    maxStacks: 2,
     apply: (p) => { p.stats.speedMult *= 1.3; },
   },
   {
@@ -111,6 +140,7 @@ export const UPGRADES: Upgrade[] = [
     name: "Dash Canister",
     category: "utility",
     description: "Compressed thruster charge. Dash cooldown reduced 35%.",
+    maxStacks: 3,
     apply: (p) => { p.stats.dashCooldownMult *= 0.65; },
   },
   {
@@ -129,8 +159,11 @@ export const UPGRADES: Upgrade[] = [
   },
 ];
 
-export function rollUpgrades(n: number): Upgrade[] {
-  const pool = UPGRADES.slice();
+export function rollUpgrades(n: number, used?: Map<string, number>): Upgrade[] {
+  const pool = UPGRADES.filter(u => {
+    if (!u.maxStacks || !used) return true;
+    return (used.get(u.id) ?? 0) < u.maxStacks;
+  });
   const result: Upgrade[] = [];
   while (result.length < n && pool.length > 0) {
     const idx = Math.floor(Math.random() * pool.length);

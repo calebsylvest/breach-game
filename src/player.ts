@@ -7,6 +7,7 @@ import { WEAPONS, type WeaponDef } from "./weapons.ts";
 const PLAYER_RADIUS = 0.4;
 const PLAYER_SPEED = 5;
 const PLAYER_MAX_HP = 100;
+const PLAYER_MAX_ARMOR = 50;
 const DASH_DISTANCE = 4;
 const DASH_DURATION = 0.18;
 const DASH_COOLDOWN = 1.5;
@@ -17,11 +18,12 @@ export interface Stats {
   fireRateMult: number;
   speedMult: number;
   maxHpBonus: number;
+  maxArmorBonus: number;
   dashCooldownMult: number;
 }
 
 export function makeStats(): Stats {
-  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0, dashCooldownMult: 1 };
+  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0, maxArmorBonus: 0, dashCooldownMult: 1 };
 }
 
 export class Player {
@@ -30,6 +32,7 @@ export class Player {
   readonly aim = new THREE.Vector3(1, 0, 0);
   stats: Stats = makeStats();
   hp = PLAYER_MAX_HP;
+  armor = PLAYER_MAX_ARMOR;
   hitFlash = 0;
   lastDamageSource = "unknown";
   dashTime = 0;
@@ -38,6 +41,7 @@ export class Player {
   weaponIndex = 0;
   reloading = false;
   reloadTimer = 0;
+  reloadDuration = 0;
   private readonly weaponMag: number[] = WEAPONS.map(w => w.magSize);
   private readonly weaponReserve: number[] = WEAPONS.map(w => w.reserveSize);
   private readonly dashDir = new THREE.Vector3();
@@ -58,6 +62,7 @@ export class Player {
     }
     this.reloading = false;
     this.reloadTimer = 0;
+    this.reloadDuration = 0;
   }
 
   /** Adds `fraction` of max reserve to each weapon slot. Returns true if any slot was below max. */
@@ -82,6 +87,7 @@ export class Player {
     if (this.reloading || this.mag >= def.magSize || this.reserve <= 0) return;
     this.reloading = true;
     this.reloadTimer = def.reloadTime;
+    this.reloadDuration = def.reloadTime;
   }
 
   updateReload(dt: number, def: WeaponDef): void {
@@ -100,6 +106,14 @@ export class Player {
     return PLAYER_MAX_HP + this.stats.maxHpBonus;
   }
 
+  get maxArmor(): number {
+    return PLAYER_MAX_ARMOR + this.stats.maxArmorBonus;
+  }
+
+  repairArmor(amount: number): void {
+    this.armor = Math.min(this.maxArmor, this.armor + amount);
+  }
+
   get speed(): number {
     return PLAYER_SPEED * this.stats.speedMult;
   }
@@ -107,6 +121,7 @@ export class Player {
   resetRun(): void {
     this.stats = makeStats();
     this.hp = this.maxHp;
+    this.armor = this.maxArmor;
     this.dashTime = 0;
     this.dashCooldown = 0;
     this.lastDamageSource = "unknown";
@@ -117,12 +132,14 @@ export class Player {
     }
     this.reloading = false;
     this.reloadTimer = 0;
+    this.reloadDuration = 0;
   }
 
   get isDashing(): boolean {
     return this.dashTime > 0;
   }
 
+  private readonly reloadRingGeo = new THREE.BufferGeometry();
   private readonly raycaster = new THREE.Raycaster();
   private readonly mouse2 = new THREE.Vector2();
   private readonly aimPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -178,11 +195,24 @@ export class Player {
     gun.position.set(0.55, 1.15, 0);
     gun.castShadow = true;
     this.group.add(gun);
+
+    // Reload progress arc — pre-allocate 49 points (48 segments + 1)
+    const ringPositions = new Float32Array(49 * 3);
+    this.reloadRingGeo.setAttribute("position", new THREE.BufferAttribute(ringPositions, 3));
+    this.reloadRingGeo.setDrawRange(0, 0);
+    const ringLine = new THREE.Line(
+      this.reloadRingGeo,
+      new THREE.LineBasicMaterial({ color: 0x6ea8ff }),
+    );
+    ringLine.position.y = 0.06;
+    ringLine.renderOrder = 1;
+    this.group.add(ringLine);
   }
 
   update(dt: number, input: Input, camera: THREE.Camera, world: World): void {
     if (this.hp <= 0) {
       this.updateHitFlash(dt);
+      this.updateReloadRing();
       return;
     }
     this.updateAim(input, camera);
@@ -198,12 +228,33 @@ export class Player {
     }
     this.group.position.set(this.position.x, 0, this.position.z);
     this.updateHitFlash(dt);
+    this.updateReloadRing();
   }
 
   damage(amount: number, source = "unknown"): void {
     if (this.hp <= 0) return;
     if (this.dashTime > 0) return;
-    this.hp = Math.max(0, this.hp - amount);
+    const absorbed = Math.min(this.armor, amount);
+    this.armor -= absorbed;
+    this.hp = Math.max(0, this.hp - (amount - absorbed));
+    this.hitFlash = 0.18;
+    this.lastDamageSource = source;
+    if (this.hp <= 0) {
+      this.group.rotation.z = Math.PI / 2;
+      this.group.position.y = 0.1;
+    }
+  }
+
+  // Split damage: hpFrac of total goes directly to HP, remainder to armor (with overflow to HP).
+  // Used for acid/corrosive attacks that partially bypass armor.
+  damageSplit(total: number, hpFrac: number, source = "unknown"): void {
+    if (this.hp <= 0) return;
+    if (this.dashTime > 0) return;
+    const directHp = total * hpFrac;
+    const armorPart = total * (1 - hpFrac);
+    const absorbed = Math.min(this.armor, armorPart);
+    this.armor -= absorbed;
+    this.hp = Math.max(0, this.hp - directHp - (armorPart - absorbed));
     this.hitFlash = 0.18;
     this.lastDamageSource = source;
     if (this.hp <= 0) {
@@ -244,6 +295,27 @@ export class Player {
     );
     this.position.x = resolved.x;
     this.position.z = resolved.z;
+  }
+
+  private updateReloadRing(): void {
+    if (!this.reloading || this.reloadDuration <= 0) {
+      this.reloadRingGeo.setDrawRange(0, 0);
+      return;
+    }
+    const progress = 1 - this.reloadTimer / this.reloadDuration;
+    const segments = 48;
+    const count = Math.max(2, Math.ceil(progress * segments) + 1);
+    const attr = this.reloadRingGeo.getAttribute("position") as THREE.BufferAttribute;
+    const arr = attr.array as Float32Array;
+    const r = 0.58;
+    for (let i = 0; i < count; i++) {
+      const angle = -Math.PI / 2 + (i / segments) * Math.PI * 2;
+      arr[i * 3]     = Math.cos(angle) * r;
+      arr[i * 3 + 1] = 0;
+      arr[i * 3 + 2] = Math.sin(angle) * r;
+    }
+    attr.needsUpdate = true;
+    this.reloadRingGeo.setDrawRange(0, count);
   }
 
   private updateHitFlash(dt: number): void {

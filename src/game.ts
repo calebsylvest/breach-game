@@ -8,7 +8,7 @@ import { LEVEL_NAMES } from "./world.ts";
 import { EnemyManager } from "./enemies.ts";
 import type { EnemyType } from "./enemies.ts";
 import { Hud } from "./hud.ts";
-import type { Upgrade } from "./upgrades.ts";
+import { rollUpgrades, type Upgrade } from "./upgrades.ts";
 import { Audio } from "./audio.ts";
 import { ParticleSystem } from "./particles.ts";
 import { LootSystem } from "./loot.ts";
@@ -70,6 +70,7 @@ export class Game {
   private manualPause = false;
   private currentLevel = 0;
   private upgradeCount = 0;
+  private readonly upgradeUsed = new Map<string, number>();
   private runStart = performance.now();
   private lastHp = 0;
   private lastKillCount = 0;
@@ -154,6 +155,7 @@ export class Game {
     }
     this.enemies.killCount = 0;
     this.upgradeCount = 0;
+    this.upgradeUsed.clear();
     this.deathShown = false;
     this.winShown = false;
     this.extractionHit = false;
@@ -273,7 +275,7 @@ export class Game {
             dz = ndz;
           }
           this.fireDir.set(dx, 0, dz);
-          this.bullets.spawn(this.muzzle, this.fireDir, damage, weapon.bulletSpeed);
+          this.bullets.spawn(this.muzzle, this.fireDir, damage, weapon.bulletSpeed, weapon.piercing);
         }
         this.particles.muzzle(muzzleX, 1.15, muzzleZ, this.player.aim.x, this.player.aim.z);
         this.fireCooldown = fireInterval;
@@ -295,6 +297,7 @@ export class Game {
       const collected = this.pickups.update(dt, this.player);
       if (collected === "health") this.audio.playerHeal();
       else if (collected === "ammo") this.audio.ammoPickup();
+      else if (collected === "armor") this.audio.playerHeal(); // reuse heal tone for armor pickup
     }
 
     // Loot case interaction — E key opens nearest case in range
@@ -394,8 +397,7 @@ export class Game {
     this.loot.reset(this.world, this.ctx.scene);
     this.pickups.reset(this.world, this.ctx.scene);
 
-    // Reposition player and refill ammo between levels
-    this.player.refillAmmo();
+    // Reposition player — ammo persists between levels
     this.player.position.copy(this.world.playerSpawn);
     this.player.group.position.set(this.player.position.x, 0, this.player.position.z);
     this.player.group.rotation.z = 0;
@@ -435,10 +437,16 @@ export class Game {
     this.paused = true;
     this.input.firing = false;
 
+    // Roll contents at open time so upgrade caps are respected
+    if (lootCase.contents.length === 0) {
+      lootCase.contents.push(...rollUpgrades(2, this.upgradeUsed));
+    }
+
     this.hud.setInteractHint(false);
     this.loot.markOpened(lootCase);
     const close = () => {
       this.hud.hideUpgrade();
+      this.input.consumeInteract(); // drain any E pressed while modal was open
       this.paused = false;
     };
     this.hud.showUpgrade(
@@ -446,6 +454,7 @@ export class Game {
       (picked: Upgrade) => {
         picked.apply(this.player);
         this.upgradeCount++;
+        this.upgradeUsed.set(picked.id, (this.upgradeUsed.get(picked.id) ?? 0) + 1);
         close();
       },
       close,

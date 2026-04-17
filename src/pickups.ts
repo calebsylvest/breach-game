@@ -2,17 +2,19 @@ import * as THREE from "three";
 import type { World } from "./world.ts";
 import type { Player } from "./player.ts";
 
-export type PickupType = "ammo" | "health";
+export type PickupType = "ammo" | "health" | "armor";
 
 const COLLECT_RADIUS = 1.1;
-const AMMO_RESERVE_RESTORE = 0.5; // fraction of max reserve restored
+const AMMO_RESERVE_RESTORE = 0.25;
 const HEALTH_RESTORE = 40;
+const ARMOR_RESTORE = 25;
 
+// Health is rare — only in nest rooms. Armor is the common defensive pickup.
 const PICKUPS_PER_ROOM: Record<string, PickupType[]> = {
-  start:      ["health", "ammo"],
-  corridor:   ["ammo"],
-  arena:      ["health"],
-  nest:       ["ammo"],
+  start:      ["ammo"],
+  corridor:   [],
+  arena:      ["armor"],
+  nest:       ["health"],
   extraction: [],
 };
 
@@ -59,6 +61,20 @@ export class PickupSystem {
       h.rotation.x = Math.PI / 2;
       v.rotation.x = Math.PI / 2;
       grp.add(h, v);
+    } else if (type === "armor") {
+      // Steel-blue hexagonal plate
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0x3a7ab0,
+        emissive: 0x1a4a7a,
+        emissiveIntensity: 1.0,
+        roughness: 0.3,
+        metalness: 0.6,
+      });
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.06, 0.44), mat);
+      const trimMat = new THREE.MeshStandardMaterial({ color: 0x6aaed6, roughness: 0.2, metalness: 0.8 });
+      const trim = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.02, 0.46), trimMat);
+      trim.position.y = 0.04;
+      grp.add(plate, trim);
     } else {
       // Gold ammo box
       const mat = new THREE.MeshStandardMaterial({
@@ -117,6 +133,12 @@ export class PickupSystem {
       p.collected = true;
       p.mesh.visible = false;
       return "health";
+    } else if (p.type === "armor") {
+      if (player.armor >= player.maxArmor) return null;
+      player.repairArmor(ARMOR_RESTORE);
+      p.collected = true;
+      p.mesh.visible = false;
+      return "armor";
     } else {
       if (!player.topUpReserve(AMMO_RESERVE_RESTORE)) return null;
       p.collected = true;

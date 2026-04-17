@@ -7,7 +7,7 @@ const BULLET_LIFE = 1.2;
 const POOL_SIZE = 128;
 
 export interface WeaponDef {
-  readonly id: "rifle" | "shotgun" | "smg";
+  readonly id: "rifle" | "shotgun" | "smg" | "sniper";
   readonly name: string;
   readonly damage: number;
   readonly pellets: number;
@@ -17,6 +17,7 @@ export interface WeaponDef {
   readonly magSize: number;
   readonly reserveSize: number;
   readonly reloadTime: number;   // seconds
+  readonly piercing?: boolean;   // bullet passes through enemies
 }
 
 export const WEAPONS: WeaponDef[] = [
@@ -56,6 +57,19 @@ export const WEAPONS: WeaponDef[] = [
     reserveSize: 180,
     reloadTime: 1.0,
   },
+  {
+    id: "sniper",
+    name: "SNIPER",
+    damage: 150,
+    pellets: 1,
+    spread: 0,
+    fireInterval: 1.6,
+    bulletSpeed: 65,
+    magSize: 5,
+    reserveSize: 20,
+    reloadTime: 2.4,
+    piercing: true,
+  },
 ];
 
 interface Bullet {
@@ -64,6 +78,7 @@ interface Bullet {
   velocity: THREE.Vector3;
   life: number;
   damage: number;
+  piercing: boolean;
 }
 
 export class BulletSystem {
@@ -88,11 +103,12 @@ export class BulletSystem {
         velocity: new THREE.Vector3(),
         life: 0,
         damage: 0,
+        piercing: false,
       });
     }
   }
 
-  spawn(origin: THREE.Vector3, direction: THREE.Vector3, damage: number, speed = 45): void {
+  spawn(origin: THREE.Vector3, direction: THREE.Vector3, damage: number, speed = 45, piercing = false): void {
     for (const b of this.bullets) {
       if (b.alive) continue;
       b.alive = true;
@@ -101,6 +117,7 @@ export class BulletSystem {
       b.velocity.copy(direction).multiplyScalar(speed);
       b.life = BULLET_LIFE;
       b.damage = damage;
+      b.piercing = piercing;
       return;
     }
   }
@@ -132,7 +149,7 @@ export class BulletSystem {
           hit.alive ? 4 : 7,
           hit.alive ? 0.3 : 0.6,
         );
-        this.retire(b);
+        if (!b.piercing) this.retire(b);
       }
     }
   }

@@ -18,9 +18,39 @@ export class Audio {
     if (ctx.state === "suspended") ctx.resume();
   }
 
-  gunshot(kind: "rifle" | "shotgun" | "smg" = "rifle"): void {
+  gunshot(kind: "rifle" | "shotgun" | "smg" | "sniper" = "rifle"): void {
     const ctx = this.ensure();
     const now = ctx.currentTime;
+
+    if (kind === "sniper") {
+      // Sharp crack + low-end thump
+      const crackBuf = ctx.createBuffer(1, 1024, ctx.sampleRate);
+      const crack = crackBuf.getChannelData(0);
+      for (let i = 0; i < crack.length; i++) crack[i] = (Math.random() * 2 - 1) * (1 - i / crack.length);
+      const crackSrc = ctx.createBufferSource();
+      crackSrc.buffer = crackBuf;
+      const crackFilt = ctx.createBiquadFilter();
+      crackFilt.type = "highpass";
+      crackFilt.frequency.value = 5000;
+      const crackGain = ctx.createGain();
+      crackGain.gain.setValueAtTime(0.5, now);
+      crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+      crackSrc.connect(crackFilt).connect(crackGain).connect(ctx.destination);
+      crackSrc.start(now);
+      // Body thump
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+      const thumpGain = ctx.createGain();
+      thumpGain.gain.setValueAtTime(0.28, now);
+      thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.connect(thumpGain).connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.42);
+      return;
+    }
+
     const len = kind === "shotgun" ? 3500 : 2048;
     const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
     const data = buffer.getChannelData(0);

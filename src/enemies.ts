@@ -56,13 +56,13 @@ const TYPES: Record<EnemyType, TypeDef> = {
     retreatDistance: 5,
     attackRange: 16,
     attackCooldown: 1.5,
-    attackDamage: 20,
+    attackDamage: 28, // buffed: split damage (60% armor / 40% HP) makes acid weaker vs HP
   },
   lurker: {
     maxHp: 150,
     speed: 4.2,
     radius: 0.42,
-    contactDamage: 60,
+    contactDamage: 80, // buffed: armor absorbs ~50 of this, so first ambush hit still bites
     contactCooldown: 1.8,
     behavior: "ambush",
     aggroRange: 5,
@@ -428,7 +428,7 @@ class SpitSystem {
       const dx = s.mesh.position.x - player.position.x;
       const dz = s.mesh.position.z - player.position.z;
       if (dx * dx + dz * dz < SPIT_HIT_RADIUS * SPIT_HIT_RADIUS) {
-        player.damage(s.damage, "spitter");
+        player.damageSplit(s.damage, 0.4, "spitter"); // acid: 60% to armor, 40% direct HP
         this.retire(s);
       }
     }
