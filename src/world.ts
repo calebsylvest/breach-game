@@ -234,7 +234,7 @@ export class World {
     if (sx <= 0 || sz <= 0) return;
     const geo = new THREE.BoxGeometry(sx, WALL_HEIGHT, sz);
     const mat = ghost
-      ? new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85, transparent: true, opacity: 0.08, depthWrite: false })
+      ? new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85, transparent: true, opacity: 0, depthWrite: false })
       : new THREE.MeshStandardMaterial({ color: 0x2f3947, roughness: 0.85 });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.position.set(x, WALL_HEIGHT / 2, z);
@@ -307,10 +307,10 @@ export class World {
       const westOpening = west ? overlap(room.minZ, room.maxZ, west.minZ, west.maxZ) : null;
       const eastOpening = east ? overlap(room.minZ, room.maxZ, east.minZ, east.maxZ) : null;
 
-      this.buildVerticalWall(room.minX, room.minZ, room.maxZ, westOpening, true);  // west — faces camera
-      this.buildVerticalWall(room.maxX, room.minZ, room.maxZ, eastOpening, false);
-      this.buildHorizontalWall(room.maxZ, room.minX, room.maxX, null, true);        // south — faces camera
-      this.buildHorizontalWall(room.minZ, room.minX, room.maxX, null, false);
+      this.buildVerticalWall(room.minX, room.minZ, room.maxZ, westOpening, false);
+      this.buildVerticalWall(room.maxX, room.minZ, room.maxZ, eastOpening, true);  // east — faces camera
+      this.buildHorizontalWall(room.maxZ, room.minX, room.maxX, null, false);
+      this.buildHorizontalWall(room.minZ, room.minX, room.maxX, null, true);        // north — faces camera
     }
   }
 
