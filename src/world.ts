@@ -120,6 +120,7 @@ export class World {
     this.buildCover();
     this.buildExteriorFill();
     this.extractionBeacon = this.buildExtractionPad();
+    this.buildRoomLights();
   }
 
   update(dt: number): void {
@@ -448,6 +449,28 @@ export class World {
     this.group.add(light);
 
     return beacon;
+  }
+
+  private buildRoomLights(): void {
+    for (const room of this.rooms) {
+      const cx = (room.minX + room.maxX) / 2;
+      const cz = (room.minZ + room.maxZ) / 2;
+      if (room.type === "arena" || room.type === "nest") {
+        // Two offset ceiling fixtures per large room
+        const color = room.type === "nest" ? 0x8844aa : 0x3a5a80;
+        const offX = (room.maxX - room.minX) * 0.22;
+        const offZ = (room.maxZ - room.minZ) * 0.22;
+        for (const [ox, oz] of [[-offX, -offZ], [offX, offZ]] as [number, number][]) {
+          const l = new THREE.PointLight(color, 1.2, 14, 2);
+          l.position.set(cx + ox, 4, cz + oz);
+          this.group.add(l);
+        }
+      } else if (room.type === "corridor" || room.type === "start") {
+        const l = new THREE.PointLight(0x2a3a50, 1.0, 10, 2);
+        l.position.set(cx, 4, cz);
+        this.group.add(l);
+      }
+    }
   }
 
   dispose(): void {

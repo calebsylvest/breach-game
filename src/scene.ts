@@ -7,6 +7,8 @@ export interface SceneCtx {
   container: HTMLElement;
   keyLight: THREE.DirectionalLight;
   playerLight: THREE.PointLight;
+  flashLight: THREE.SpotLight;
+  flashTarget: THREE.Object3D;
 }
 
 const FRUSTUM = 22;
@@ -35,8 +37,8 @@ export function createScene(container: HTMLElement): SceneCtx {
   camera.position.set(16, 20, 16);
   camera.lookAt(0, 0, 0);
 
-  // Low ambient — rooms are dark; the player light does the work
-  scene.add(new THREE.AmbientLight(0x1a2030, 0.35));
+  // Low ambient — rooms are dark; player light + flashlight do the work
+  scene.add(new THREE.AmbientLight(0x1a2030, 0.5));
 
   // Directional key light kept for shadow quality but dimmed
   const key = new THREE.DirectionalLight(0xffe2b2, 0.55);
@@ -57,10 +59,19 @@ export function createScene(container: HTMLElement): SceneCtx {
   rim.position.set(-10, 10, -10);
   scene.add(rim);
 
-  // Player-carried point light — primary visibility source
-  const playerLight = new THREE.PointLight(0xffe8c0, 3.2, 15, 2);
+  // Player-carried point light — fills in close surroundings
+  const playerLight = new THREE.PointLight(0xffe8c0, 5.0, 20, 2);
   playerLight.position.set(0, 3, 0);
   scene.add(playerLight);
+
+  // Directional flashlight in aim direction — primary long-range visibility
+  const flashTarget = new THREE.Object3D();
+  scene.add(flashTarget);
+  const flashLight = new THREE.SpotLight(0xf0f4ff, 4.5, 22, 0.38, 0.5, 2);
+  flashLight.position.set(0, 3, 0);
+  flashLight.target = flashTarget;
+  flashLight.castShadow = false;
+  scene.add(flashLight);
 
   window.addEventListener("resize", () => {
     const w = container.clientWidth;
@@ -74,5 +85,5 @@ export function createScene(container: HTMLElement): SceneCtx {
     renderer.setSize(w, h);
   });
 
-  return { renderer, scene, camera, container, keyLight: key, playerLight };
+  return { renderer, scene, camera, container, keyLight: key, playerLight, flashLight, flashTarget };
 }
