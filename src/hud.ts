@@ -42,6 +42,8 @@ export class Hud {
   private readonly levelTransName: HTMLElement;
   private readonly levelTransBtn: HTMLButtonElement;
   private levelTransCleanup: (() => void) | null = null;
+  private readonly pauseEl: HTMLElement;
+  private readonly pauseResume: HTMLButtonElement;
 
   constructor(
     onDeathRestart: () => void,
@@ -81,6 +83,8 @@ export class Hud {
     this.levelTransNum = required("level-trans-num");
     this.levelTransName = required("level-trans-name");
     this.levelTransBtn = required("level-trans-btn") as HTMLButtonElement;
+    this.pauseEl = required("pause");
+    this.pauseResume = required("pause-resume") as HTMLButtonElement;
   }
 
   hideTitle(): void {
@@ -228,6 +232,16 @@ export class Hud {
     this.upgradeEl.classList.remove("show");
     this.upgradeCards.innerHTML = "";
     this.upgradeCloseCleanup = null;
+  }
+
+  showPause(onResume: () => void): void {
+    const handler = () => onResume();
+    this.pauseResume.addEventListener("click", handler, { once: true });
+    this.pauseEl.classList.add("show");
+  }
+
+  hidePause(): void {
+    this.pauseEl.classList.remove("show");
   }
 
   setInteractHint(visible: boolean): void {

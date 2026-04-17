@@ -192,6 +192,37 @@
       .upgrade-card.defense:hover { background: #0f1c2e; }
       .upgrade-card.utility { border-color: #d4c066; }
       .upgrade-card.utility:hover { background: #25200c; }
+      #pause {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(4, 8, 14, 0.82);
+        pointer-events: none;
+      }
+      #pause.show { display: flex; }
+      #pause .panel {
+        text-align: center;
+        pointer-events: auto;
+      }
+      #pause h1 {
+        font-size: 64px;
+        margin: 0 0 28px;
+        color: #d9e2ec;
+        letter-spacing: 0.22em;
+      }
+      #pause button {
+        background: #2b6cd9;
+        color: #d9e2ec;
+        border: 0;
+        padding: 12px 36px;
+        font: inherit;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      #pause button:hover { background: #3a82f7; }
       #title {
         position: fixed;
         inset: 0;
@@ -293,7 +324,7 @@
         <div class="bar"><div class="bar-fill" id="dash-fill" style="width:100%; background: linear-gradient(90deg, #2b6cd9, #6ea8ff)"></div></div>
       </div>
       <div class="corner br">
-        <div class="dim">WASD move · mouse aim · click fire · space dash · 1/2/3 weapon · R reload · E interact</div>
+        <div class="dim">WASD move · mouse aim · click fire · space dash · 1/2/3 weapon · R reload · E interact · Esc pause</div>
       </div>
     </div>
     <div id="death">
@@ -330,6 +361,12 @@
         <div class="sub" id="level-trans-num">LEVEL 2</div>
         <h1 id="level-trans-name">PROCESSING WING</h1>
         <button id="level-trans-btn">continue</button>
+      </div>
+    </div>
+    <div id="pause">
+      <div class="panel">
+        <h1>PAUSED</h1>
+        <button id="pause-resume">resume</button>
       </div>
     </div>
     <div id="title">

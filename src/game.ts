@@ -67,6 +67,7 @@ export class Game {
   private winShown = false;
   private extractionHit = false;
   private paused = false;
+  private manualPause = false;
   private currentLevel = 0;
   private upgradeCount = 0;
   private runStart = performance.now();
@@ -157,6 +158,8 @@ export class Game {
     this.winShown = false;
     this.extractionHit = false;
     this.paused = false;
+    this.manualPause = false;
+    this.hud.hidePause();
     this.runStart = performance.now();
     this.lastHp = this.player.hp;
     this.lastKillCount = 0;
@@ -197,7 +200,14 @@ export class Game {
   }
 
   private tick(dt: number): void {
-    if (this.paused) {
+    // Manual pause toggle — only when no system overlay is active
+    if (this.input.consumePause() && !this.deathShown && !this.winShown && !this.paused) {
+      this.manualPause = true;
+      this.input.firing = false;
+      this.hud.showPause(() => this.resume());
+    }
+
+    if (this.paused || this.manualPause) {
       this.ctx.renderer.render(this.ctx.scene, this.ctx.camera);
       return;
     }
@@ -413,6 +423,12 @@ export class Game {
     this.initRoomStates();
     this.hud.hideLevelTransition();
     this.paused = false;
+  }
+
+  private resume(): void {
+    this.manualPause = false;
+    this.hud.hidePause();
+    this.last = performance.now(); // prevent dt spike after pause
   }
 
   private openLootCase(lootCase: import("./loot.ts").LootCase): void {
