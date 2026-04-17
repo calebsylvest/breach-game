@@ -273,7 +273,7 @@ export class World {
   }
 
   private buildExteriorFill(): void {
-    const { minX, maxX, minZ, maxZ } = this.bounds;
+    const { maxX, minZ, maxZ } = this.bounds;
     const pad = 14;
     const fillH = 5.5;
     const mat = new THREE.MeshStandardMaterial({ color: 0x0c1018, roughness: 1.0 });
@@ -287,14 +287,13 @@ export class World {
       this.group.add(mesh);
     };
 
-    // West and east caps — extend beyond entire level including pad
-    addFill(minX - pad, minX, minZ - pad, maxZ + pad);
+    // East cap — behind the level from camera, stays solid
     addFill(maxX, maxX + pad, minZ - pad, maxZ + pad);
 
-    // Per-room north and south fill — covers gaps between rooms of different depths
+    // Per-room north fill only — solid back wall behind each room.
+    // South fill omitted: camera faces south side, floor plane shows through instead.
     for (const room of this.rooms) {
       addFill(room.minX, room.maxX, minZ - pad, room.minZ);
-      addFill(room.minX, room.maxX, room.maxZ, maxZ + pad);
     }
   }
 
@@ -307,10 +306,10 @@ export class World {
       const westOpening = west ? overlap(room.minZ, room.maxZ, west.minZ, west.maxZ) : null;
       const eastOpening = east ? overlap(room.minZ, room.maxZ, east.minZ, east.maxZ) : null;
 
-      this.buildVerticalWall(room.minX, room.minZ, room.maxZ, westOpening, false);
-      this.buildVerticalWall(room.maxX, room.minZ, room.maxZ, eastOpening, true);  // east — faces camera
-      this.buildHorizontalWall(room.maxZ, room.minX, room.maxX, null, false);
-      this.buildHorizontalWall(room.minZ, room.minX, room.maxX, null, true);        // north — faces camera
+      this.buildVerticalWall(room.minX, room.minZ, room.maxZ, westOpening, true);  // west — faces camera
+      this.buildVerticalWall(room.maxX, room.minZ, room.maxZ, eastOpening, false);
+      this.buildHorizontalWall(room.maxZ, room.minX, room.maxX, null, true);        // south — faces camera
+      this.buildHorizontalWall(room.minZ, room.minX, room.maxX, null, false);
     }
   }
 
