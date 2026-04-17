@@ -20,10 +20,11 @@ export interface Stats {
   maxHpBonus: number;
   maxArmorBonus: number;
   dashCooldownMult: number;
+  piercingBullets: boolean;
 }
 
 export function makeStats(): Stats {
-  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0, maxArmorBonus: 0, dashCooldownMult: 1 };
+  return { damageMult: 1, fireRateMult: 1, speedMult: 1, maxHpBonus: 0, maxArmorBonus: 0, dashCooldownMult: 1, piercingBullets: false };
 }
 
 export class Player {
@@ -33,6 +34,7 @@ export class Player {
   stats: Stats = makeStats();
   hp = PLAYER_MAX_HP;
   armor = PLAYER_MAX_ARMOR;
+  extraLives = 0;
   hitFlash = 0;
   lastDamageSource = "unknown";
   dashTime = 0;
@@ -114,6 +116,18 @@ export class Player {
     this.armor = Math.min(this.maxArmor, this.armor + amount);
   }
 
+  // Returns true if an extra life was consumed to revive the player.
+  tryRevive(): boolean {
+    if (this.extraLives <= 0) return false;
+    this.extraLives--;
+    this.hp = 50;
+    this.armor = Math.min(this.maxArmor, this.armor + 25);
+    this.group.rotation.z = 0;
+    this.group.position.y = 0;
+    this.hitFlash = 0.6; // long flash to signal revival
+    return true;
+  }
+
   get speed(): number {
     return PLAYER_SPEED * this.stats.speedMult;
   }
@@ -122,6 +136,7 @@ export class Player {
     this.stats = makeStats();
     this.hp = this.maxHp;
     this.armor = this.maxArmor;
+    this.extraLives = 0;
     this.dashTime = 0;
     this.dashCooldown = 0;
     this.lastDamageSource = "unknown";

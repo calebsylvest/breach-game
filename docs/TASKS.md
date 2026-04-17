@@ -111,8 +111,8 @@ _None._
   - FUTURE: Character traits — Strength (carry capacity) affects max armor; Speed penalty for heavy armor
   - FUTURE: Enemy armor stat with AP Round interactions
   - FUTURE: Attack types that fully bypass armor (pure HP damage)
-- [ ] Piercing bullets upgrade
-- [ ] Extra life upgrade
+- [x] Piercing bullets upgrade — "Piercing Rounds" card (maxStacks 1), sets `piercingBullets` flag on Stats
+- [x] Extra life upgrade — "Emergency Beacon" card (maxStacks 2), `tryRevive()` intercepts death, restores 50 HP + 25 armor
 
 ### Weapons
 - [x] Sniper (piercing, slow) — 150 dmg, 1.6s fire rate, 5 mag, pierces through enemies, key 4, distinct crack+thump audio
@@ -145,7 +145,10 @@ _None._
 
 ## Research
 
-- [ ] **RESEARCH: Environment lighting / fog of war** — Player shouldn't see the whole level at once. Explore per-room lighting with falloff, or a fog-of-war layer that reveals only near light sources (level fixtures + player avatar light). Assess Three.js feasibility and perf cost.
+- [x] **RESEARCH: Environment lighting / fog of war** — Implemented: ambient drastically reduced, player-carried PointLight (r=15, warm) is primary visibility. Fog tightened (18→42 vs old 30→80). Extraction beacon light was already in world.ts. Result: rooms outside player radius go dark; works with orthographic camera.
+  - FUTURE: Per-room ceiling fixtures as dim static lights for navigation landmarks
+  - FUTURE: Enemy light sources (glowing nests, spitter acid trails)
+  - FUTURE: Flickering/damaged lights in later levels
 - [ ] **RESEARCH: Texturing and visual enhancements** — Investigate procedural textures, normal maps, or material improvements to make the isometric world look more polished and distinctive without asset loading.
 
 ---

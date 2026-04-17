@@ -118,6 +118,16 @@ export const UPGRADES: Upgrade[] = [
     apply: (p) => { p.hp = Math.min(p.maxHp, p.hp + 30); },
   },
 
+  // ── Offense (continued) ──────────────────────────────────────────────────
+  {
+    id: "piercing_rounds",
+    name: "Piercing Rounds",
+    category: "offense",
+    description: "Hardened penetrators. All bullets pierce through enemies.",
+    maxStacks: 1,
+    apply: (p) => { p.stats.piercingBullets = true; },
+  },
+
   // ── Utility ───────────────────────────────────────────────────────────────
   {
     id: "exo_legs",
@@ -142,6 +152,14 @@ export const UPGRADES: Upgrade[] = [
     description: "Compressed thruster charge. Dash cooldown reduced 35%.",
     maxStacks: 3,
     apply: (p) => { p.stats.dashCooldownMult *= 0.65; },
+  },
+  {
+    id: "extra_life",
+    name: "Emergency Beacon",
+    category: "utility",
+    description: "Automated distress signal. Revive once with 50 HP on death.",
+    maxStacks: 2,
+    apply: (p) => { p.extraLives++; },
   },
   {
     id: "ammo_cache",

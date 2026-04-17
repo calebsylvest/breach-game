@@ -275,7 +275,7 @@ export class Game {
             dz = ndz;
           }
           this.fireDir.set(dx, 0, dz);
-          this.bullets.spawn(this.muzzle, this.fireDir, damage, weapon.bulletSpeed, weapon.piercing);
+          this.bullets.spawn(this.muzzle, this.fireDir, damage, weapon.bulletSpeed, weapon.piercing || this.player.stats.piercingBullets);
         }
         this.particles.muzzle(muzzleX, 1.15, muzzleZ, this.player.aim.x, this.player.aim.z);
         this.fireCooldown = fireInterval;
@@ -323,16 +323,20 @@ export class Game {
     }
 
     if (this.player.hp <= 0 && !this.deathShown) {
-      const elapsed = (performance.now() - this.runStart) / 1000;
-      this.hud.showDeath(
-        this.player.lastDamageSource,
-        this.enemies.killCount,
-        elapsed,
-        this.currentLevel + 1,
-        this.upgradeCount,
-      );
-      this.audio.deathTone();
-      this.deathShown = true;
+      if (this.player.tryRevive()) {
+        this.audio.playerHeal();
+      } else {
+        const elapsed = (performance.now() - this.runStart) / 1000;
+        this.hud.showDeath(
+          this.player.lastDamageSource,
+          this.enemies.killCount,
+          elapsed,
+          this.currentLevel + 1,
+          this.upgradeCount,
+        );
+        this.audio.deathTone();
+        this.deathShown = true;
+      }
     }
 
     if (!this.extractionHit && !this.deathShown && this.playerReachedExtraction()) {
@@ -480,5 +484,10 @@ export class Game {
     light.position.copy(this.followTarget).add(LIGHT_OFFSET);
     light.target.position.copy(this.followTarget);
     light.target.updateMatrixWorld();
+    this.ctx.playerLight.position.set(
+      this.player.position.x,
+      3,
+      this.player.position.z,
+    );
   }
 }
