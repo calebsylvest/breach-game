@@ -143,6 +143,13 @@ _None._
 
 ---
 
+## Research
+
+- [ ] **RESEARCH: Environment lighting / fog of war** — Player shouldn't see the whole level at once. Explore per-room lighting with falloff, or a fog-of-war layer that reveals only near light sources (level fixtures + player avatar light). Assess Three.js feasibility and perf cost.
+- [ ] **RESEARCH: Texturing and visual enhancements** — Investigate procedural textures, normal maps, or material improvements to make the isometric world look more polished and distinctive without asset loading.
+
+---
+
 ## Stretch Goals
 
 - [ ] Non-linear room paths — World generator branching (large scope)
