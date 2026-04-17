@@ -118,7 +118,6 @@ export class World {
     this.buildFloor();
     this.buildWalls();
     this.buildCover();
-    this.buildExteriorFill();
     this.extractionBeacon = this.buildExtractionPad();
   }
 
@@ -272,30 +271,6 @@ export class World {
     this.group.add(grid);
   }
 
-  private buildExteriorFill(): void {
-    const { maxX, minZ, maxZ } = this.bounds;
-    const pad = 14;
-    const fillH = 5.5;
-    const mat = new THREE.MeshStandardMaterial({ color: 0x0c1018, roughness: 1.0 });
-
-    const addFill = (x1: number, x2: number, z1: number, z2: number) => {
-      const sx = x2 - x1;
-      const sz = z2 - z1;
-      if (sx <= 0 || sz <= 0) return;
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, fillH, sz), mat);
-      mesh.position.set((x1 + x2) / 2, fillH / 2, (z1 + z2) / 2);
-      this.group.add(mesh);
-    };
-
-    // East cap — behind the level from camera, stays solid
-    addFill(maxX, maxX + pad, minZ - pad, maxZ + pad);
-
-    // Per-room north fill only — solid back wall behind each room.
-    // South fill omitted: camera faces south side, floor plane shows through instead.
-    for (const room of this.rooms) {
-      addFill(room.minX, room.maxX, minZ - pad, room.minZ);
-    }
-  }
 
   private buildWalls(): void {
     for (let i = 0; i < this.rooms.length; i++) {
